@@ -1,0 +1,6 @@
+{
+  "name": "SI-TATAUSAHA - Sistem Informasi Tata Usaha Sekolah",
+  "description": "Aplikasi manajemen administrasi dan tata usaha sekolah terpadu mencakup persuratan dinas, buku induk siswa, kepegawaian, SPP & kas, inventaris sarpras, cetak dokumen resmi, dan asisten surat dinas AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
