@@ -222,7 +222,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
         {/* Footer info */}
         <p className="text-center text-[11px] text-slate-500 mt-4">
-          Kementerian Pendidikan Dasar dan Menengah RI · Tata Naskah Dinas Elektronik
+          Aplikasi ini dikembangkan oleh : "The Roots"
         </p>
       </div>
     </div>
