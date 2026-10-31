@@ -13,6 +13,9 @@ import {
   FileText,
   PlusCircle,
   FileCheck,
+  UserCog,
+  Crown,
+  RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.tsx';
 
@@ -26,6 +29,8 @@ export const DashboardView: React.FC = () => {
     openPrintModal,
     schoolProfile,
     currentUser,
+    setIsChangePasswordOpen,
+    setIsUserManagementOpen,
   } = useApp();
 
   const recentMails = mails.slice(0, 4);
@@ -45,16 +50,87 @@ export const DashboardView: React.FC = () => {
               </span>
             )}
           </div>
-          <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-white mb-2">
-            Selamat Datang, {currentUser ? currentUser.name : `di Portal ${schoolProfile.namaSekolah}`}
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+            <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-white">
+              Selamat Datang, {currentUser ? currentUser.name : `di Portal ${schoolProfile.namaSekolah}`}
+            </h2>
+            {currentUser && (
+              <div className="flex items-center gap-2 shrink-0">
+                {currentUser.role === 'super_admin' && (
+                  <button
+                    onClick={() => setIsUserManagementOpen(true)}
+                    title="Buka panel khusus Master Reset dan Kelola Seluruh Akun Pengguna"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-all cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset Akun Semuanya</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setIsChangePasswordOpen(true)}
+                  title="Klik untuk mengubah nama profil, gelar, NIP, nomor HP, atau kata sandi Anda sendiri"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-blue-200 bg-slate-800/80 hover:bg-blue-600 hover:text-white rounded-lg border border-slate-700/80 hover:border-blue-500 transition-all cursor-pointer shadow-xs"
+                >
+                  <UserCog className="w-3.5 h-3.5" />
+                  <span>Ubah Identitas Saya</span>
+                </button>
+              </div>
+            )}
+          </div>
           <p className="text-xs text-slate-300 leading-relaxed">
-            Kelola persuratan dinas, buku induk siswa, administrasi kepegawaian PTK, pencatatan SPP & kas, serta pemeliharaan sarana prasarana sekolah secara terpusat, cepat, dan akuntabel.
+            {currentUser?.role === 'super_admin'
+              ? 'Wewenang Paling Lengkap: Mengelola seluruh modul Tata Usaha, Kas & SPP Bendahara, Disposisi Kepala Sekolah, Buku Induk Operator, serta Reset Akun Master.'
+              : currentUser?.role === 'bendahara'
+              ? 'Kelola administrasi setoran SPP, DSP/Uang Pangkal, kas masuk & keluar, kwitansi resmi, serta monitoring pembayaran siswa secara akuntabel.'
+              : currentUser?.role === 'kepsek'
+              ? 'Pantau statistik operasional sekolah secara komprehensif, telaah dan instruksikan lembar disposisi surat masuk, serta verifikasi pengesahan surat resmi.'
+              : currentUser?.role === 'operator' || currentUser?.role === 'staf_tu'
+              ? 'Kelola buku induk kesiswaan, entri mutasi murid, agenda persuratan harian, serta inventarisasi barang sarana prasarana sekolah.'
+              : 'Kelola persuratan dinas, buku induk siswa, administrasi kepegawaian PTK, pencatatan SPP & kas, serta pemeliharaan sarana prasarana sekolah secara terpusat dan akuntabel.'}
           </p>
 
-
+          {/* Role-Specific Quick Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5 mt-4">
-            {currentUser?.role === 'bendahara' ? (
+            {currentUser?.role === 'super_admin' ? (
+              <>
+                <button
+                  onClick={() => setIsUserManagementOpen(true)}
+                  className="px-3.5 py-1.5 text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Crown className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Kelola Akun & Hak Akses</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('mail')}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Persuratan & Disposisi</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('finance')}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Receipt className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Kas & SPP</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('students')}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Users className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Buku Induk Siswa</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('ai-letters')}
+                  className="px-3 py-1.5 text-xs font-semibold text-amber-300 bg-slate-800/80 hover:bg-slate-700 border border-amber-500/30 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Surat AI</span>
+                </button>
+              </>
+            ) : currentUser?.role === 'bendahara' ? (
               <>
                 <button
                   onClick={() => setCurrentView('finance')}
@@ -71,21 +147,21 @@ export const DashboardView: React.FC = () => {
                   <span>Cek Status Siswa</span>
                 </button>
               </>
-            ) : currentUser?.role === 'staf_tu' ? (
+            ) : currentUser?.role === 'operator' || currentUser?.role === 'staf_tu' ? (
               <>
                 <button
-                  onClick={() => setCurrentView('mail')}
-                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>Buka Agenda Surat</span>
-                </button>
-                <button
                   onClick={() => setCurrentView('students')}
-                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <Users className="w-3.5 h-3.5" />
-                  <span>Buku Induk Siswa</span>
+                  <span>Entri Buku Induk Siswa</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('mail')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Agenda Surat</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('inventory')}
@@ -93,13 +169,6 @@ export const DashboardView: React.FC = () => {
                 >
                   <Boxes className="w-3.5 h-3.5" />
                   <span>Sarana & Aset</span>
-                </button>
-                <button
-                  onClick={() => setCurrentView('ai-letters')}
-                  className="px-3.5 py-1.5 text-xs font-semibold text-amber-300 bg-slate-800/80 hover:bg-slate-700 border border-amber-500/30 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Draf Surat AI</span>
                 </button>
               </>
             ) : currentUser?.role === 'kepsek' ? (
@@ -125,8 +194,16 @@ export const DashboardView: React.FC = () => {
                   <Briefcase className="w-3.5 h-3.5" />
                   <span>Kepegawaian PTK</span>
                 </button>
+                <button
+                  onClick={() => setCurrentView('finance')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>Monitoring Kas</span>
+                </button>
               </>
             ) : (
+              /* Admin Tata Usaha */
               <>
                 <button
                   onClick={() => setCurrentView('mail')}
@@ -136,11 +213,18 @@ export const DashboardView: React.FC = () => {
                   <span>Buka Agenda Surat</span>
                 </button>
                 <button
-                  onClick={() => setCurrentView('finance')}
+                  onClick={() => setCurrentView('students')}
                   className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Receipt className="w-3.5 h-3.5" />
-                  <span>Catat Pembayaran SPP</span>
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Buku Induk Siswa</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('staff')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span>Data PTK</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('ai-letters')}

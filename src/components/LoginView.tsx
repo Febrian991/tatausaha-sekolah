@@ -154,14 +154,44 @@ export const LoginView: React.FC = () => {
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                 Sesi Enkripsi Terlindungi
               </span>
-              <span>Hak Akses Berjenjang</span>
+              <span className="font-semibold text-slate-500">5 Tingkat Hak Akses</span>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-500 flex items-start gap-2">
-              <ShieldAlert className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-              <p className="leading-relaxed">
-                Setiap jabatan (Kepala TU, Bendahara, Operator, Kepala Sekolah) memiliki wewenang modul yang disesuaikan. Hubungi Koordinator Tata Usaha jika Anda lupa kredensial.
-              </p>
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-600 space-y-2">
+              <div className="flex items-start gap-2">
+                <ShieldAlert className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  <strong>Tingkat Wewenang:</strong> Super Admin &gt; Admin Tata Usaha &gt; Bendahara &gt; Kepala Sekolah (Plus Operator). Fitur terlengkap dan Reset Akun berada di Super Admin.
+                </p>
+              </div>
+
+              <details className="text-[10px] text-slate-500 border-t border-slate-200 pt-2 cursor-pointer">
+                <summary className="font-semibold text-blue-600 hover:text-blue-800 select-none">
+                  Lihat Kredensial Akun Default (Klik di sini)
+                </summary>
+                <div className="mt-2 space-y-1 font-mono text-[10px] bg-white p-2.5 rounded-lg border border-slate-200 text-slate-700">
+                  <div className="flex justify-between">
+                    <span className="text-violet-700 font-bold">1. Super Admin:</span>
+                    <span>superadmin / superadmin123</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700 font-bold">2. Admin TU:</span>
+                    <span>admin / admin123</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-emerald-700 font-bold">3. Bendahara:</span>
+                    <span>bendahara / bendahara123</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-purple-700 font-bold">4. Kepala Sekolah:</span>
+                    <span>kepsek / kepsek123</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-amber-700 font-bold">5. Operator:</span>
+                    <span>operator / operator123</span>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
         </div>

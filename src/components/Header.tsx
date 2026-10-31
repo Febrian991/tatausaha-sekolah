@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, Printer, Sparkles, Building2, BookOpen, Download, KeyRound, LogOut } from 'lucide-react';
+import { Search, Plus, Printer, Sparkles, Building2, BookOpen, Download, KeyRound, LogOut, Crown } from 'lucide-react';
 import { useApp } from '../context/AppContext.tsx';
 
 export const Header: React.FC = () => {
@@ -14,6 +14,7 @@ export const Header: React.FC = () => {
     currentUser,
     logout,
     setIsChangePasswordOpen,
+    setIsUserManagementOpen,
   } = useApp();
 
   const getBreadcrumbTitle = () => {
@@ -99,6 +100,18 @@ export const Header: React.FC = () => {
           <span>Panduan PDF</span>
         </button>
 
+        {currentUser?.role === 'super_admin' && (
+          <button
+            onClick={() => setIsUserManagementOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-violet-800 bg-violet-100 hover:bg-violet-200 border border-violet-300 rounded-lg shadow-2xs transition-colors whitespace-nowrap cursor-pointer"
+            title="Pusat Manajemen Pengguna & Reset Akun Semuanya"
+          >
+            <Crown className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden sm:inline">Kelola &amp; Reset Akun</span>
+            <span className="sm:hidden">Akun</span>
+          </button>
+        )}
+
         <a
           href="/api/download-source-zip"
           download="SI-TATAUSAHA-LENGKAP.zip"
@@ -112,7 +125,11 @@ export const Header: React.FC = () => {
         {/* User Account Capsule */}
         {currentUser && (
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-            <div className="flex items-center gap-2 bg-slate-100/90 hover:bg-slate-100 py-1 px-2 rounded-xl border border-slate-200">
+            <button
+              onClick={() => setIsChangePasswordOpen(true)}
+              className="flex items-center gap-2 bg-slate-100/90 hover:bg-slate-200/80 py-1 px-2 rounded-xl border border-slate-200 transition-colors text-left cursor-pointer"
+              title="Klik untuk ubah nama profil atau kata sandi akun"
+            >
               <div
                 className={`w-7 h-7 rounded-lg ${currentUser.avatarColor || 'bg-blue-600'} text-white flex items-center justify-center font-bold text-xs shadow-xs`}
               >
@@ -126,7 +143,7 @@ export const Header: React.FC = () => {
                   {currentUser.roleLabel.split(' ')[0]}
                 </div>
               </div>
-            </div>
+            </button>
 
             <button
               onClick={() => setIsChangePasswordOpen(true)}

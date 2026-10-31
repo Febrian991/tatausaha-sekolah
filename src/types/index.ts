@@ -128,7 +128,14 @@ export interface PrintableDocumentData {
   nomorSuratCustom?: string;
 }
 
-export type UserRole = 'kepsek' | 'kepala_tu' | 'bendahara' | 'staf_tu';
+export type UserRole =
+  | 'super_admin'
+  | 'admin_tu'
+  | 'bendahara'
+  | 'kepsek'
+  | 'operator'
+  | 'kepala_tu' // legacy backward compatibility
+  | 'staf_tu';   // legacy backward compatibility
 
 export interface UserAccount {
   id: string;
@@ -138,6 +145,7 @@ export interface UserAccount {
   roleLabel: string;
   nip?: string;
   jabatan: string;
+  phone?: string;
   avatarColor: string;
 }
 

@@ -28,7 +28,23 @@ interface AppContextType {
   changePassword: (oldPass: string, newPass: string) => { success: boolean; message?: string };
   isChangePasswordOpen: boolean;
   setIsChangePasswordOpen: (open: boolean) => void;
+  isUserManagementOpen: boolean;
+  setIsUserManagementOpen: (open: boolean) => void;
   users: StoredUser[];
+  updateUserProfile: (data: {
+    name?: string;
+    nip?: string;
+    jabatan?: string;
+    roleLabel?: string;
+    phone?: string;
+    username?: string;
+  }) => { success: boolean; message?: string };
+  resetAllAccounts: () => { success: boolean; message: string };
+  adminResetUserPassword: (userId: string, newPassword?: string) => { success: boolean; message: string };
+  adminResetUserToDefault: (userId: string) => { success: boolean; message: string };
+  adminUpdateUser: (userId: string, data: Partial<StoredUser>) => { success: boolean; message: string };
+  adminAddUser: (user: Omit<StoredUser, 'id'>) => { success: boolean; message: string };
+  adminDeleteUser: (userId: string) => { success: boolean; message: string };
   currentView: ViewMode;
   setCurrentView: (view: ViewMode) => void;
   schoolProfile: SchoolProfile;
@@ -139,7 +155,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [users, setUsers] = useState<StoredUser[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY}_users`);
-      return saved ? JSON.parse(saved) : defaultUsers;
+      if (!saved) return defaultUsers;
+      const parsed: StoredUser[] = JSON.parse(saved);
+      // Ensure super_admin exists in user list
+      const hasSuperAdmin = parsed.some(
+        (u) => u.role === 'super_admin' || u.username === 'superadmin'
+      );
+      if (!hasSuperAdmin) {
+        return defaultUsers;
+      }
+      return parsed;
     } catch {
       return defaultUsers;
     }
@@ -159,6 +184,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isBackupOpen, setIsBackupOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
 
   // Auto-sync to localStorage
@@ -347,21 +373,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const login = (username: string, password: string) => {
     const cleanUser = username.trim().toLowerCase();
     const cleanPass = password.trim();
-    const found = users.find(
-      (u) => u.username.toLowerCase() === cleanUser && u.password === cleanPass
-    );
+
+    // Check direct match or alias (e.g. admintu -> admin)
+    const found = users.find((u) => {
+      const matchName =
+        u.username.toLowerCase() === cleanUser ||
+        (cleanUser === 'admintu' && u.username.toLowerCase() === 'admin') ||
+        (cleanUser === 'admin' && u.username.toLowerCase() === 'admintu');
+      return matchName && u.password === cleanPass;
+    });
+
     if (!found) {
       return {
         success: false,
-        message: 'Username atau password tidak sesuai. Silakan periksa kembali!',
+        message: 'Username atau kata sandi tidak cocok. Silakan periksa kembali!',
       };
     }
     const { password: _, ...accountOnly } = found;
     setCurrentUser(accountOnly);
+
     // Role-based view redirect
     if (found.role === 'bendahara') {
       setCurrentView('finance');
-    } else if (found.role === 'kepsek') {
+    } else if (found.role === 'operator' || found.role === 'staf_tu') {
+      setCurrentView('students');
+    } else {
       setCurrentView('dashboard');
     }
     return { success: true };
@@ -377,15 +413,167 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const userIndex = users.findIndex((u) => u.id === currentUser.id);
     if (userIndex === -1) return { success: false, message: 'Data pengguna tidak ditemukan.' };
     if (users[userIndex].password !== oldPass) {
-      return { success: false, message: 'Password lama Anda tidak sesuai!' };
+      return { success: false, message: 'Kata sandi lama Anda tidak sesuai!' };
     }
     if (newPass.length < 4) {
-      return { success: false, message: 'Password baru minimal 4 karakter.' };
+      return { success: false, message: 'Kata sandi baru minimal 4 karakter.' };
     }
     const updatedUsers = [...users];
     updatedUsers[userIndex] = { ...updatedUsers[userIndex], password: newPass };
     setUsers(updatedUsers);
-    return { success: true, message: 'Password Anda berhasil diperbarui.' };
+    return { success: true, message: 'Kata sandi Anda berhasil diperbarui.' };
+  };
+
+  // Setiap pengguna bisa mengedit sendiri identitas profilnya (Nama, NIP, Jabatan, RoleLabel, Phone, Username)
+  const updateUserProfile = (data: {
+    name?: string;
+    nip?: string;
+    jabatan?: string;
+    roleLabel?: string;
+    phone?: string;
+    username?: string;
+  }) => {
+    if (!currentUser) return { success: false, message: 'Sesi pengguna tidak aktif.' };
+
+    // If changing username, ensure uniqueness
+    if (data.username && data.username.toLowerCase() !== currentUser.username.toLowerCase()) {
+      const cleanUsername = data.username.trim().toLowerCase();
+      const isTaken = users.some(
+        (u) => u.id !== currentUser.id && u.username.toLowerCase() === cleanUsername
+      );
+      if (isTaken) {
+        return { success: false, message: `Username "${data.username}" sudah digunakan oleh akun lain.` };
+      }
+    }
+
+    const updatedAccount: UserAccount = {
+      ...currentUser,
+      ...data,
+      name: data.name !== undefined ? data.name.trim() : currentUser.name,
+      username: data.username !== undefined ? data.username.trim().toLowerCase() : currentUser.username,
+      nip: data.nip !== undefined ? data.nip.trim() : currentUser.nip,
+      jabatan: data.jabatan !== undefined ? data.jabatan.trim() : currentUser.jabatan,
+      roleLabel: data.roleLabel !== undefined ? data.roleLabel.trim() : currentUser.roleLabel,
+      phone: data.phone !== undefined ? data.phone.trim() : currentUser.phone,
+    };
+
+    setCurrentUser(updatedAccount);
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === currentUser.id
+          ? {
+              ...u,
+              ...data,
+              name: updatedAccount.name,
+              username: updatedAccount.username,
+              nip: updatedAccount.nip,
+              jabatan: updatedAccount.jabatan,
+              roleLabel: updatedAccount.roleLabel,
+              phone: updatedAccount.phone,
+            }
+          : u
+      )
+    );
+
+    return { success: true, message: 'Identitas profil berhasil diperbarui.' };
+  };
+
+  // SUPER ADMIN EXCLUSIVE: Reset Akun Semuanya ke Default
+  const resetAllAccounts = () => {
+    setUsers(defaultUsers);
+    localStorage.setItem(`${STORAGE_KEY}_users`, JSON.stringify(defaultUsers));
+
+    // If currently logged in as Super Admin, update current session to default Super Admin
+    if (currentUser?.role === 'super_admin' || currentUser?.id === 'user-000') {
+      const { password: _, ...superAdminAccount } = defaultUsers[0];
+      setCurrentUser(superAdminAccount);
+    }
+
+    return {
+      success: true,
+      message: 'Seluruh akun (Super Admin, Admin TU, Bendahara, Kepsek, Operator) berhasil di-reset ke data dan sandi awal pabrik!',
+    };
+  };
+
+  // Super Admin: Reset password specific user
+  const adminResetUserPassword = (userId: string, newPassword?: string) => {
+    const userIndex = users.findIndex((u) => u.id === userId);
+    if (userIndex === -1) return { success: false, message: 'Pengguna tidak ditemukan.' };
+
+    const defaultMatch = defaultUsers.find((d) => d.id === userId || d.username === users[userIndex].username);
+    const targetPassword = newPassword || defaultMatch?.password || '123456';
+
+    const updated = [...users];
+    updated[userIndex] = { ...updated[userIndex], password: targetPassword };
+    setUsers(updated);
+
+    return {
+      success: true,
+      message: `Kata sandi akun ${users[userIndex].name} berhasil di-reset menjadi "${targetPassword}".`,
+    };
+  };
+
+  // Super Admin: Reset specific user profile to default
+  const adminResetUserToDefault = (userId: string) => {
+    const defaultMatch = defaultUsers.find((d) => d.id === userId);
+    if (!defaultMatch) return { success: false, message: 'Data default pengguna tidak ditemukan.' };
+
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...defaultMatch } : u)));
+    if (currentUser?.id === userId) {
+      const { password: _, ...cleanAccount } = defaultMatch;
+      setCurrentUser(cleanAccount);
+    }
+
+    return {
+      success: true,
+      message: `Akun ${defaultMatch.name} berhasil dikembalikan ke pengaturan default.`,
+    };
+  };
+
+  // Super Admin: Update user details
+  const adminUpdateUser = (userId: string, data: Partial<StoredUser>) => {
+    const userIndex = users.findIndex((u) => u.id === userId);
+    if (userIndex === -1) return { success: false, message: 'Pengguna tidak ditemukan.' };
+
+    const updated = [...users];
+    updated[userIndex] = { ...updated[userIndex], ...data };
+    setUsers(updated);
+
+    if (currentUser?.id === userId) {
+      const { password: _, ...cleanAccount } = updated[userIndex];
+      setCurrentUser(cleanAccount);
+    }
+
+    return { success: true, message: 'Data pengguna berhasil diperbarui.' };
+  };
+
+  // Super Admin: Add new user
+  const adminAddUser = (user: Omit<StoredUser, 'id'>) => {
+    const cleanUsername = user.username.trim().toLowerCase();
+    const exists = users.some((u) => u.username.toLowerCase() === cleanUsername);
+    if (exists) {
+      return { success: false, message: `Username "${user.username}" sudah digunakan!` };
+    }
+
+    const id = `user-${Date.now().toString().slice(-4)}`;
+    const newUser: StoredUser = { ...user, id, username: cleanUsername };
+    setUsers((prev) => [...prev, newUser]);
+    return { success: true, message: `Akun baru "${user.name}" berhasil ditambahkan.` };
+  };
+
+  // Super Admin: Delete user
+  const adminDeleteUser = (userId: string) => {
+    const target = users.find((u) => u.id === userId);
+    if (!target) return { success: false, message: 'Pengguna tidak ditemukan.' };
+    if (target.role === 'super_admin' || target.id === 'user-000') {
+      return { success: false, message: 'Akun Super Admin utama tidak dapat dihapus!' };
+    }
+    if (currentUser?.id === userId) {
+      return { success: false, message: 'Anda tidak dapat menghapus akun yang sedang aktif digunakan!' };
+    }
+
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    return { success: true, message: `Akun "${target.name}" berhasil dihapus.` };
   };
 
   // Calculated stats
@@ -402,9 +590,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         login,
         logout,
         changePassword,
+        updateUserProfile,
         isChangePasswordOpen,
         setIsChangePasswordOpen,
+        isUserManagementOpen,
+        setIsUserManagementOpen,
         users,
+        resetAllAccounts,
+        adminResetUserPassword,
+        adminResetUserToDefault,
+        adminUpdateUser,
+        adminAddUser,
+        adminDeleteUser,
         currentView,
         setCurrentView,
         schoolProfile,

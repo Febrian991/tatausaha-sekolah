@@ -20,6 +20,7 @@ import { BackupRestoreModal } from './components/BackupRestoreModal.tsx';
 import { UserGuideModal } from './components/UserGuideModal.tsx';
 import { LoginView } from './components/LoginView.tsx';
 import { ChangePasswordModal } from './components/ChangePasswordModal.tsx';
+import { UserManagementModal } from './components/UserManagementModal.tsx';
 
 const MainLayout: React.FC = () => {
   const { currentView } = useApp();
@@ -67,6 +68,7 @@ const MainLayout: React.FC = () => {
       <BackupRestoreModal />
       <UserGuideModal />
       <ChangePasswordModal />
+      <UserManagementModal />
     </div>
   );
 };
