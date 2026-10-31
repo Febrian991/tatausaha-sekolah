@@ -1,151 +1,185 @@
-export type ViewMode =
-  | 'dashboard'
-  | 'students'
-  | 'staff'
-  | 'mail'
-  | 'finance'
-  | 'inventory'
-  | 'ai-letters';
+export type Role = 'admin' | 'kepsek' | 'kasubag_tu' | 'staf_persuratan' | 'operator_dapodik';
+
+export interface UserSession {
+  id: string;
+  username: string;
+  name: string;
+  role: Role;
+  roleLabel: string;
+  avatar?: string;
+}
+
+export type TitiMangsaPosition = 'header_right' | 'above_signature';
 
 export interface SchoolProfile {
+  namaPemda: string;
+  namaDinas: string;
+  cabangDinas: string;
   namaSekolah: string;
   npsn: string;
   nss: string;
   akreditasi: string;
-  statusSekolah: 'Negeri' | 'Swasta';
-  dinasPendidikan: string;
   alamat: string;
-  kelurahanDesa: string;
-  kecamatan: string;
   kotaKabupaten: string;
   provinsi: string;
   kodePos: string;
   telepon: string;
   email: string;
   website: string;
-  kepalaSekolah: string;
+  namaKepalaSekolah: string;
   nipKepalaSekolah: string;
-  kepalaTU: string;
-  nipKepalaTU: string;
-  bendahara: string;
-  nipBendahara: string;
+  pangkatKepalaSekolah: string;
+  namaKasubagTU: string;
+  nipKasubagTU: string;
+  pangkatKasubagTU: string;
+  logoKiriSvg?: string;
+  logoKananSvg?: string;
+  titiMangsaPosition: TitiMangsaPosition;
 }
 
-export interface Student {
+export interface ScanFileInfo {
   id: string;
-  nisn: string;
-  nis: string;
-  nama: string;
-  jenisKelamin: 'L' | 'P';
-  tempatLahir: string;
-  tanggalLahir: string;
-  kelas: string;
-  jurusan: string;
-  namaWali: string;
-  pekerjaanWali: string;
-  kontakWali: string;
-  alamat: string;
-  tahunMasuk: string;
-  status: 'Aktif' | 'Lulus' | 'Mutasi Keluar' | 'Cuti';
-  catatanKhusus?: string;
+  namaFile: string;
+  tipe: 'image' | 'pdf';
+  ukuran: string;
+  dataUrl: string;
+  uploadedAt: string;
 }
 
-export interface Staff {
+export interface DisposisiData {
   id: string;
-  nip: string;
-  nuptk: string;
-  nama: string;
-  gelarDepan?: string;
-  gelarBelakang?: string;
-  jenisKelamin: 'L' | 'P';
-  unitKerja: 'Tenaga Pendidik (Guru)' | 'Tenaga Kependidikan (TU)' | 'Petugas Keamanan' | 'Petugas Kebersihan';
-  jabatan: string;
-  golongan: string;
-  statusKepegawaian: 'PNS' | 'PPPK' | 'GTT (Honorer Guru)' | 'PTT (Honorer TU)';
-  mataPelajaran?: string;
-  pendidikanTerakhir: string;
-  telepon: string;
-  email: string;
-  statusAktif: boolean;
+  tujuanDisposisi: string[];
+  batasWaktu: string;
+  instruksi: string[];
+  catatanPimpinan: string;
+  tglDisposisi: string;
+  pemberiDisposisi: string;
 }
 
-export interface Mail {
+export interface SuratMasuk {
   id: string;
-  jenis: 'Masuk' | 'Keluar';
   noAgenda: string;
   noSurat: string;
   tanggalSurat: string;
   tanggalDiterima: string;
-  pengirim: string;
-  penerima: string;
+  asalSurat: string;
   perihal: string;
-  kodeKlasifikasi: string; // Misal: 421.1 (Kurikulum), 421.2 (Sarpras), 421.3 (Kesiswaan), 421.4 (Kepegawaian)
   ringkasan: string;
-  statusDisposisi: 'Belum' | 'Sudah Didisposisi' | 'Selesai';
-  disposisiKepada?: string;
-  instruksiDisposisi?: string;
-  catatanKepalaSekolah?: string;
-  batasWaktu?: string;
-  fileLampiranNama?: string;
+  klasifikasi: 'Biasa' | 'Penting' | 'Rahasia' | 'Segera';
+  statusDisposisi: 'Belum' | 'Sudah';
+  disposisi?: DisposisiData;
+  scanFile?: ScanFileInfo;
 }
 
-export interface SPPTransaction {
+export interface SuratKeluar {
   id: string;
-  noKwitansi: string;
-  studentId: string;
+  noAgenda: string;
+  noSurat: string;
+  kodeKlasifikasi: string;
+  tujuanSurat: string;
+  perihal: string;
+  ringkasan: string;
+  tanggalSurat: string;
+  penandatangan: string;
+  statusArsip: 'Draft' | 'Terkirim' | 'Diarsipkan';
+  scanFile?: ScanFileInfo;
+}
+
+export type MutasiStatusDapodik = 
+  | 'Belum Sinkron'
+  | 'Proses Tarik'
+  | 'Sudah Sinkron'
+  | 'Dikeluarkan'
+  | 'Validasi Cabdis';
+
+export interface MutasiSiswa {
+  id: string;
+  jenis: 'masuk' | 'keluar';
+  namaSiswa: string;
+  nis: string;
+  nisn: string;
+  jenisKelamin: 'Laki-laki' | 'Perempuan';
+  kelas: string;
+  tempatTanggalLahir: string;
+  sekolahAsal: string;
+  sekolahTujuan: string;
+  tanggalMutasi: string;
+  alasanMutasi: string;
+  nomorSuratRekomendasi: string;
+  tanggalSuratRekomendasi: string;
+  statusDapodik: MutasiStatusDapodik;
+  catatanDapodik: string;
+  scanBerkas?: ScanFileInfo;
+}
+
+export interface SPPDBiayaItem {
+  id: string;
+  uraian: string;
+  volume: number;
+  satuan: string;
+  hargaSatuan: number;
+  total: number;
+}
+
+export interface SPPDData {
+  id: string;
+  noSuratTugas: string;
+  noSPPD: string;
+  dasarTugas: string;
+  namaPegawai: string;
+  nip: string;
+  pangkatGol: string;
+  jabatan: string;
+  tingkatBiaya: string;
+  maksudPerjalanan: string;
+  alatAngkut: string;
+  tempatBerangkat: string;
+  tempatTujuan: string;
+  lamaHari: number;
+  tglBerangkat: string;
+  tglKembali: string;
+  rincianBiaya: SPPDBiayaItem[];
+  pembebananAnggaran: string;
+  mataAnggaran: string;
+  pejabatPemberiPerintah: string;
+  bendaharaPengeluaran: string;
+  tanggalSurat: string;
+}
+
+export interface UndanganRapatGTKData {
+  id: string;
+  noSurat: string;
+  sifat: 'Penting' | 'Biasa' | 'Segera';
+  lampiran: string;
+  perihal: string;
+  tanggalRapat: string;
+  waktuMulai: string;
+  waktuSelesai: string;
+  tempatRapat: string;
+  agenda: string[];
+  dressCode: string;
+  peserta: string;
+  pimpinanRapat: string;
+  catatanKhusus: string;
+  tanggalSurat: string;
+}
+
+export interface PanggilanOrtuData {
+  id: string;
+  noSurat: string;
+  sifat: 'Penting' | 'Rahasia';
+  lampiran: string;
+  perihal: string;
   namaSiswa: string;
   nisn: string;
   kelas: string;
-  jenisPembayaran: 'SPP Bulanan' | 'DSP / Uang Pangkal' | 'Uang Ujian & Asesmen' | 'Seragam & Praktik' | 'Iuran Kegiatan Organisasi';
-  bulan: string; // Misal: "Juli 2026", "Agustus 2026"
-  nominal: number;
-  tanggalBayar: string;
-  metode: 'Tunai' | 'Transfer Bank' | 'QRIS' | 'Virtual Account';
-  petugasTU: string;
-  status: 'Lunas' | 'Sebagian';
-  keterangan?: string;
+  namaOrtu: string;
+  alamatOrtu: string;
+  hariTanggal: string;
+  waktu: string;
+  tempat: string;
+  menghadapKepada: string;
+  keperluan: string;
+  catatanWaliKelas: string;
+  tanggalSurat: string;
 }
-
-export interface InventoryItem {
-  id: string;
-  kodeBarang: string;
-  namaBarang: string;
-  kategori: 'Elektronik & Komputer' | 'Mebel & Perlengkapan' | 'Media Pembelajaran' | 'Alat Olahraga' | 'Buku & Pustaka' | 'Peralatan Lab';
-  lokasiRuang: string; // Ruang Lab Komputer 1, Ruang Kelas XI-RPL 1, Perpustakaan, dsb.
-  jumlah: number;
-  satuan: string; // Unit, Buah, Set, Paket
-  kondisi: 'Baik' | 'Rusak Ringan' | 'Rusak Berat';
-  tahunPerolehan: string;
-  sumberDana: 'BOS Reguler' | 'BOS Kinerja' | 'Komite Sekolah' | 'Bantuan Pemerintah (DAK)' | 'Yayasan';
-  penanggungJawab: string;
-}
-
-export interface PrintableDocumentData {
-  type: 'surat-keterangan-aktif' | 'surat-tugas' | 'surat-panggilan' | 'kuitansi-spp' | 'lembar-disposisi' | 'agenda-surat' | 'kartu-inventaris' | 'kustom-ai';
-  title: string;
-  data: any;
-  customBody?: string;
-  nomorSuratCustom?: string;
-}
-
-export type UserRole =
-  | 'super_admin'
-  | 'admin_tu'
-  | 'bendahara'
-  | 'kepsek'
-  | 'operator'
-  | 'kepala_tu' // legacy backward compatibility
-  | 'staf_tu';   // legacy backward compatibility
-
-export interface UserAccount {
-  id: string;
-  username: string;
-  name: string;
-  role: UserRole;
-  roleLabel: string;
-  nip?: string;
-  jabatan: string;
-  phone?: string;
-  avatarColor: string;
-}
-

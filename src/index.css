@@ -3,45 +3,46 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  }
-  
-  .font-mono-numbers {
-    font-family: 'JetBrains Mono', monospace;
-    font-variant-numeric: tabular-nums;
+    color: #1e293b;
+    background-color: #f8fafc;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
+/* Custom styling for official Kedinasan Indonesian documents */
+.font-surat {
+  font-family: 'Tinos', 'Times New Roman', Times, serif;
+}
+
 @media print {
-  /* Hide non-printable elements */
-  nav, aside, header, footer, .no-print, button, .modal-backdrop-print-hide {
+  /* Hide all UI elements when printing */
+  .no-print,
+  nav,
+  aside,
+  header,
+  .print-hide {
     display: none !important;
   }
-  
+
   body {
-    background: white !important;
-    color: black !important;
-    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
 
-  #printable-document, #guide-printable-document {
-    display: block !important;
-    position: static !important;
+  .print-area {
     width: 100% !important;
     max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .page-break {
     page-break-after: always;
-    break-after: page;
   }
 
   @page {
     size: A4 portrait;
-    margin: 18mm 15mm 18mm 15mm;
+    margin: 1.5cm 2cm 1.5cm 2cm;
   }
 }
