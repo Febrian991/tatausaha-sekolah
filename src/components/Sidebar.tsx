@@ -11,6 +11,9 @@ import {
   Settings,
   DatabaseBackup,
   BookOpen,
+  Download,
+  LogOut,
+  KeyRound,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.tsx';
 import { ViewMode } from '../types/index.ts';
@@ -23,9 +26,20 @@ interface NavItem {
 }
 
 export const Sidebar: React.FC = () => {
-  const { currentView, setCurrentView, stats, schoolProfile, setIsSettingsOpen, setIsBackupOpen, setIsGuideOpen } = useApp();
+  const {
+    currentView,
+    setCurrentView,
+    stats,
+    schoolProfile,
+    setIsSettingsOpen,
+    setIsBackupOpen,
+    setIsGuideOpen,
+    currentUser,
+    logout,
+    setIsChangePasswordOpen,
+  } = useApp();
 
-  const navItems: NavItem[] = [
+  const allNavItems: NavItem[] = [
     {
       id: 'dashboard',
       label: 'Ringkasan Eksekutif',
@@ -65,6 +79,24 @@ export const Sidebar: React.FC = () => {
     },
   ];
 
+  // Role-based navigation filtering
+  const allowedViews: ViewMode[] = (() => {
+    if (!currentUser) return ['dashboard'];
+    switch (currentUser.role) {
+      case 'bendahara':
+        return ['dashboard', 'finance', 'students'];
+      case 'kepsek':
+        return ['dashboard', 'mail', 'students', 'staff', 'ai-letters'];
+      case 'staf_tu':
+        return ['dashboard', 'mail', 'students', 'staff', 'inventory', 'ai-letters'];
+      case 'kepala_tu':
+      default:
+        return ['dashboard', 'mail', 'students', 'staff', 'finance', 'inventory', 'ai-letters'];
+    }
+  })();
+
+  const navItems = allNavItems.filter((item) => allowedViews.includes(item.id));
+
   return (
     <aside className="w-64 bg-slate-900 text-slate-100 border-r border-slate-800 flex flex-col shrink-0 min-h-screen select-none no-print">
       {/* Brand Zone */}
@@ -82,8 +114,13 @@ export const Sidebar: React.FC = () => {
 
       {/* Navigation List */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <div className="px-3 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-          Modul Tata Usaha
+        <div className="px-3 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+          <span>Modul Tata Usaha</span>
+          {currentUser && (
+            <span className="text-[9px] text-blue-400 bg-blue-950/80 px-1.5 py-0.5 rounded font-mono">
+              {currentUser.roleLabel.split(' ')[0]}
+            </span>
+          )}
         </div>
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -92,7 +129,7 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setCurrentView(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 isActive
                   ? 'bg-blue-600 text-white shadow-sm font-semibold'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -118,45 +155,71 @@ export const Sidebar: React.FC = () => {
 
       {/* School Status & Bottom Actions */}
       <div className="p-3 border-t border-slate-800 space-y-2 bg-slate-900/60">
-        <div className="px-3 py-2 bg-slate-800/80 rounded-lg text-slate-300 text-[11px]">
-          <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span>NPSN</span>
-            <span className="font-mono text-slate-200">{schoolProfile.npsn}</span>
+        {currentUser && (
+          <div className="p-2.5 bg-slate-800/90 rounded-xl border border-slate-700/60 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className={`w-8 h-8 rounded-lg ${currentUser.avatarColor || 'bg-blue-600'} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs`}>
+                {currentUser.name.charAt(0)}
+              </div>
+              <div className="truncate">
+                <p className="text-xs font-bold text-white truncate leading-tight">{currentUser.name.split(',')[0]}</p>
+                <p className="text-[10px] text-slate-400 truncate">{currentUser.roleLabel}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => setIsChangePasswordOpen(true)}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700/80 rounded-md transition-colors cursor-pointer"
+                title="Ganti Password"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm('Yakin ingin keluar dari akun ini?')) {
+                    logout();
+                  }
+                }}
+                className="p-1.5 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded-md transition-colors cursor-pointer"
+                title="Keluar / Logout"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center justify-between text-slate-400">
-            <span>Akreditasi</span>
-            <span className="text-emerald-400 font-medium">{schoolProfile.akreditasi.split(' ')[0]}</span>
-          </div>
-        </div>
+        )}
 
         <button
           onClick={() => setIsGuideOpen(true)}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-amber-200 bg-amber-950/40 hover:bg-amber-900/50 border border-amber-800/60 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-amber-200 bg-amber-950/40 hover:bg-amber-900/50 border border-amber-800/60 rounded-lg transition-colors cursor-pointer"
           title="Buka dan Unduh Buku Panduan PDF Lengkap"
         >
           <BookOpen className="w-3.5 h-3.5 text-amber-400" />
           <span>Buku Panduan PDF</span>
         </button>
 
-        <div className="grid grid-cols-2 gap-1 pt-0.5">
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-2.5 py-2 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-md transition-colors"
-            title="Pengaturan Kop Surat & Identitas Sekolah"
-          >
-            <Settings className="w-3.5 h-3.5" />
-            <span>Kop Surat</span>
-          </button>
-          <button
-            onClick={() => setIsBackupOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-2.5 py-2 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-md transition-colors"
-            title="Cadangkan atau Pulihkan Data JSON"
-          >
-            <DatabaseBackup className="w-3.5 h-3.5" />
-            <span>Cadangan</span>
-          </button>
-        </div>
+        {(!currentUser || currentUser.role === 'kepala_tu') && (
+          <div className="grid grid-cols-2 gap-1 pt-0.5">
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
+              title="Pengaturan Kop Surat & Identitas Sekolah"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>Kop Surat</span>
+            </button>
+            <button
+              onClick={() => setIsBackupOpen(true)}
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
+              title="Cadangkan atau Pulihkan Data JSON"
+            >
+              <DatabaseBackup className="w-3.5 h-3.5" />
+              <span>Cadangan</span>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );
 };
+

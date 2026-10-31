@@ -18,6 +18,8 @@ import { PrintModal } from './components/PrintModal.tsx';
 import { SchoolSettingsModal } from './components/SchoolSettingsModal.tsx';
 import { BackupRestoreModal } from './components/BackupRestoreModal.tsx';
 import { UserGuideModal } from './components/UserGuideModal.tsx';
+import { LoginView } from './components/LoginView.tsx';
+import { ChangePasswordModal } from './components/ChangePasswordModal.tsx';
 
 const MainLayout: React.FC = () => {
   const { currentView } = useApp();
@@ -64,14 +66,26 @@ const MainLayout: React.FC = () => {
       <SchoolSettingsModal />
       <BackupRestoreModal />
       <UserGuideModal />
+      <ChangePasswordModal />
     </div>
   );
+};
+
+const AppContent: React.FC = () => {
+  const { currentUser } = useApp();
+
+  if (!currentUser) {
+    return <LoginView />;
+  }
+
+  return <MainLayout />;
 };
 
 export default function App() {
   return (
     <AppProvider>
-      <MainLayout />
+      <AppContent />
     </AppProvider>
   );
 }
+

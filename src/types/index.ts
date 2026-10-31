@@ -127,3 +127,17 @@ export interface PrintableDocumentData {
   customBody?: string;
   nomorSuratCustom?: string;
 }
+
+export type UserRole = 'kepsek' | 'kepala_tu' | 'bendahara' | 'staf_tu';
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  name: string;
+  role: UserRole;
+  roleLabel: string;
+  nip?: string;
+  jabatan: string;
+  avatarColor: string;
+}
+

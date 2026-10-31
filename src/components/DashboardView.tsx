@@ -25,6 +25,7 @@ export const DashboardView: React.FC = () => {
     students,
     openPrintModal,
     schoolProfile,
+    currentUser,
   } = useApp();
 
   const recentMails = mails.slice(0, 4);
@@ -38,14 +39,19 @@ export const DashboardView: React.FC = () => {
           <div className="flex items-center gap-2 text-xs font-semibold text-blue-300 uppercase tracking-wider mb-1">
             <span>Pusat Administrasi & Tata Usaha Terpadu</span>
             <span>·</span>
-            <span>Tahun Ajaran 2026/2027</span>
+            {currentUser && (
+              <span className="px-2 py-0.5 rounded-full bg-blue-600/70 text-blue-100 border border-blue-400/30 text-[10px] font-semibold">
+                {currentUser.roleLabel}
+              </span>
+            )}
           </div>
           <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-white mb-2">
-            Selamat Datang di Portal Tata Usaha {schoolProfile.namaSekolah}
+            Selamat Datang, {currentUser ? currentUser.name : `di Portal ${schoolProfile.namaSekolah}`}
           </h2>
           <p className="text-xs text-slate-300 leading-relaxed">
             Kelola persuratan dinas, buku induk siswa, administrasi kepegawaian PTK, pencatatan SPP & kas, serta pemeliharaan sarana prasarana sekolah secara terpusat, cepat, dan akuntabel.
           </p>
+
 
           <div className="flex flex-wrap items-center gap-2.5 mt-4">
             <button

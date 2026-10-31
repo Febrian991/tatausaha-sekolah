@@ -8,6 +8,7 @@ import {
   SPPTransaction,
   InventoryItem,
   PrintableDocumentData,
+  UserAccount,
 } from '../types/index.ts';
 import {
   defaultSchoolProfile,
@@ -16,9 +17,18 @@ import {
   defaultMails,
   defaultSPPTransactions,
   defaultInventory,
+  defaultUsers,
+  StoredUser,
 } from '../data/initialData.ts';
 
 interface AppContextType {
+  currentUser: UserAccount | null;
+  login: (username: string, password: string) => { success: boolean; message?: string };
+  logout: () => void;
+  changePassword: (oldPass: string, newPass: string) => { success: boolean; message?: string };
+  isChangePasswordOpen: boolean;
+  setIsChangePasswordOpen: (open: boolean) => void;
+  users: StoredUser[];
   currentView: ViewMode;
   setCurrentView: (view: ViewMode) => void;
   schoolProfile: SchoolProfile;
@@ -126,13 +136,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  const [users, setUsers] = useState<StoredUser[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_users`);
+      return saved ? JSON.parse(saved) : defaultUsers;
+    } catch {
+      return defaultUsers;
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_current_user`);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [printDoc, setPrintDoc] = useState<PrintableDocumentData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isBackupOpen, setIsBackupOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
 
   // Auto-sync to localStorage
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY}_users`, JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`${STORAGE_KEY}_current_user`, JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem(`${STORAGE_KEY}_current_user`);
+    }
+  }, [currentUser]);
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_school`, JSON.stringify(schoolProfile));
   }, [schoolProfile]);
@@ -304,6 +344,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const login = (username: string, password: string) => {
+    const cleanUser = username.trim().toLowerCase();
+    const cleanPass = password.trim();
+    const found = users.find(
+      (u) => u.username.toLowerCase() === cleanUser && u.password === cleanPass
+    );
+    if (!found) {
+      return {
+        success: false,
+        message: 'Username atau password tidak sesuai. Silakan periksa kembali!',
+      };
+    }
+    const { password: _, ...accountOnly } = found;
+    setCurrentUser(accountOnly);
+    // Role-based view redirect
+    if (found.role === 'bendahara') {
+      setCurrentView('finance');
+    } else if (found.role === 'kepsek') {
+      setCurrentView('dashboard');
+    }
+    return { success: true };
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    setCurrentView('dashboard');
+  };
+
+  const changePassword = (oldPass: string, newPass: string) => {
+    if (!currentUser) return { success: false, message: 'Sesi pengguna tidak aktif.' };
+    const userIndex = users.findIndex((u) => u.id === currentUser.id);
+    if (userIndex === -1) return { success: false, message: 'Data pengguna tidak ditemukan.' };
+    if (users[userIndex].password !== oldPass) {
+      return { success: false, message: 'Password lama Anda tidak sesuai!' };
+    }
+    if (newPass.length < 4) {
+      return { success: false, message: 'Password baru minimal 4 karakter.' };
+    }
+    const updatedUsers = [...users];
+    updatedUsers[userIndex] = { ...updatedUsers[userIndex], password: newPass };
+    setUsers(updatedUsers);
+    return { success: true, message: 'Password Anda berhasil diperbarui.' };
+  };
+
   // Calculated stats
   const activeStudents = students.filter((s) => s.status === 'Aktif').length;
   const totalStaff = staff.filter((s) => s.statusAktif).length;
@@ -314,6 +398,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
+        currentUser,
+        login,
+        logout,
+        changePassword,
+        isChangePasswordOpen,
+        setIsChangePasswordOpen,
+        users,
         currentView,
         setCurrentView,
         schoolProfile,
@@ -363,6 +454,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       {children}
     </AppContext.Provider>
   );
+
 };
 
 export const useApp = () => {

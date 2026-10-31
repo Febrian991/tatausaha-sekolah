@@ -1,4 +1,4 @@
-import { SchoolProfile, Student, Staff, Mail, SPPTransaction, InventoryItem } from '../types/index.ts';
+import { SchoolProfile, Student, Staff, Mail, SPPTransaction, InventoryItem, UserAccount } from '../types/index.ts';
 
 export const defaultSchoolProfile: SchoolProfile = {
   namaSekolah: 'SMK NEGERI 1 TELADAN BANGSA',
@@ -734,5 +734,56 @@ export const defaultInventory: InventoryItem[] = [
     tahunPerolehan: '2024',
     sumberDana: 'BOS Kinerja',
     penanggungJawab: 'Faisal Fajar Hidayat, S.Pd.',
+  },
+];
+
+export interface StoredUser extends UserAccount {
+  password: string;
+}
+
+export const defaultUsers: StoredUser[] = [
+  {
+    id: 'user-001',
+    username: 'admin',
+    password: 'admin123',
+    name: 'Drs. H. Mulyadi Suherman, M.Pd.',
+    role: 'kepala_tu',
+    roleLabel: 'Kepala Tata Usaha (Admin)',
+    jabatan: 'Koordinator Tata Usaha & Administrator Sistem',
+    nip: '19750812 199903 1 004',
+    avatarColor: 'bg-blue-600',
+  },
+  {
+    id: 'user-002',
+    username: 'kepsek',
+    password: 'kepsek123',
+    name: 'Dr. H. Ahmad Fauzi, M.Pd.',
+    role: 'kepsek',
+    roleLabel: 'Kepala Sekolah',
+    jabatan: 'Pimpinan Eksekutif Sekolah',
+    nip: '19700515 199512 1 002',
+    avatarColor: 'bg-purple-600',
+  },
+  {
+    id: 'user-003',
+    username: 'bendahara',
+    password: 'bendahara123',
+    name: 'Dian Permatasari, S.E.',
+    role: 'bendahara',
+    roleLabel: 'Bendahara Sekolah',
+    jabatan: 'Bendahara & Pengelola Keuangan SPP',
+    nip: '19880920 201101 2 009',
+    avatarColor: 'bg-emerald-600',
+  },
+  {
+    id: 'user-004',
+    username: 'operator',
+    password: 'operator123',
+    name: 'Budi Santoso, S.Kom.',
+    role: 'staf_tu',
+    roleLabel: 'Staf Administrasi / Operator TU',
+    jabatan: 'Operator Kesiswaan & Agenda Persuratan',
+    nip: '19920418 202012 1 008',
+    avatarColor: 'bg-amber-600',
   },
 ];
