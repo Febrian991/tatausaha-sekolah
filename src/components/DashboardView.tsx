@@ -54,27 +54,103 @@ export const DashboardView: React.FC = () => {
 
 
           <div className="flex flex-wrap items-center gap-2.5 mt-4">
-            <button
-              onClick={() => setCurrentView('mail')}
-              className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
-            >
-              <Mail className="w-3.5 h-3.5" />
-              <span>Buka Agenda Surat</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('finance')}
-              className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              <Receipt className="w-3.5 h-3.5" />
-              <span>Catat Pembayaran SPP</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('ai-letters')}
-              className="px-3.5 py-1.5 text-xs font-semibold text-amber-300 bg-slate-800/80 hover:bg-slate-700 border border-amber-500/30 rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Draf Surat AI</span>
-            </button>
+            {currentUser?.role === 'bendahara' ? (
+              <>
+                <button
+                  onClick={() => setCurrentView('finance')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>Catat Pembayaran SPP & Kas</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('students')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Cek Status Siswa</span>
+                </button>
+              </>
+            ) : currentUser?.role === 'staf_tu' ? (
+              <>
+                <button
+                  onClick={() => setCurrentView('mail')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Buka Agenda Surat</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('students')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Buku Induk Siswa</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('inventory')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Boxes className="w-3.5 h-3.5" />
+                  <span>Sarana & Aset</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('ai-letters')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-amber-300 bg-slate-800/80 hover:bg-slate-700 border border-amber-500/30 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Draf Surat AI</span>
+                </button>
+              </>
+            ) : currentUser?.role === 'kepsek' ? (
+              <>
+                <button
+                  onClick={() => setCurrentView('mail')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Disposisi Surat Masuk</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('students')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Data Siswa</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('staff')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span>Kepegawaian PTK</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setCurrentView('mail')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Buka Agenda Surat</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('finance')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>Catat Pembayaran SPP</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('ai-letters')}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-amber-300 bg-slate-800/80 hover:bg-slate-700 border border-amber-500/30 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Draf Surat AI</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -290,53 +366,114 @@ export const DashboardView: React.FC = () => {
       {/* Quick Action Shortcuts Panel */}
       <div className="bg-slate-100/70 border border-slate-200/80 rounded-xl p-5">
         <h3 className="font-bold text-xs text-slate-700 uppercase tracking-wider mb-3">
-          Tindakan Cepat Staf Administrasi
+          {currentUser?.role === 'bendahara'
+            ? 'Tindakan Cepat Pengelolaan Keuangan & SPP'
+            : currentUser?.role === 'staf_tu'
+            ? 'Tindakan Cepat Staf Administrasi & Tata Usaha'
+            : currentUser?.role === 'kepsek'
+            ? 'Tindakan Cepat Pimpinan & Evaluasi'
+            : 'Tindakan Cepat Administrasi Terpadu'}
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button
-            onClick={() => setCurrentView('students')}
-            className="p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:shadow-xs transition-all text-left"
-          >
-            <div className="w-7 h-7 rounded bg-blue-50 text-blue-600 flex items-center justify-center mb-2">
-              <FileCheck className="w-4 h-4" />
-            </div>
-            <p className="font-bold text-xs text-slate-900">Cetak Surat Siswa</p>
-            <p className="text-[11px] text-slate-500">Surat Keterangan Aktif / Mutasi</p>
-          </button>
+        
+        {currentUser?.role === 'bendahara' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              onClick={() => setCurrentView('finance')}
+              className="p-3.5 bg-white border border-slate-200 rounded-lg hover:border-emerald-400 hover:shadow-xs transition-all text-left cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
+                <Receipt className="w-4 h-4" />
+              </div>
+              <p className="font-bold text-xs text-slate-900">Entri Pembayaran SPP</p>
+              <p className="text-[11px] text-slate-500">Cetak Kuitansi Resmi & Bukti Kas</p>
+            </button>
 
-          <button
-            onClick={() => setCurrentView('finance')}
-            className="p-3 bg-white border border-slate-200 rounded-lg hover:border-emerald-400 hover:shadow-xs transition-all text-left"
-          >
-            <div className="w-7 h-7 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
-              <Receipt className="w-4 h-4" />
-            </div>
-            <p className="font-bold text-xs text-slate-900">Entri Kas & SPP</p>
-            <p className="text-[11px] text-slate-500">Cetak Kuitansi Resmi 2 Rangkap</p>
-          </button>
+            <button
+              onClick={() => setCurrentView('finance')}
+              className="p-3.5 bg-white border border-slate-200 rounded-lg hover:border-emerald-400 hover:shadow-xs transition-all text-left cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
+                <FileText className="w-4 h-4" />
+              </div>
+              <p className="font-bold text-xs text-slate-900">Buku Kas Umum (BKU)</p>
+              <p className="text-[11px] text-slate-500">Rekap Penerimaan & Pengeluaran Kas</p>
+            </button>
 
-          <button
-            onClick={() => setCurrentView('mail')}
-            className="p-3 bg-white border border-slate-200 rounded-lg hover:border-amber-400 hover:shadow-xs transition-all text-left"
-          >
-            <div className="w-7 h-7 rounded bg-amber-50 text-amber-600 flex items-center justify-center mb-2">
-              <PlusCircle className="w-4 h-4" />
-            </div>
-            <p className="font-bold text-xs text-slate-900">Registrasi Surat Masuk</p>
-            <p className="text-[11px] text-slate-500">Lembar Disposisi Kepala Sekolah</p>
-          </button>
+            <button
+              onClick={() => setCurrentView('students')}
+              className="p-3.5 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:shadow-xs transition-all text-left cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded bg-blue-50 text-blue-600 flex items-center justify-center mb-2">
+                <Users className="w-4 h-4" />
+              </div>
+              <p className="font-bold text-xs text-slate-900">Cek Tunggakan & Data Siswa</p>
+              <p className="text-[11px] text-slate-500">Validasi Nama & Kelas Pembayar</p>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <button
+              onClick={() => setCurrentView('students')}
+              className="p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:shadow-xs transition-all text-left cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded bg-blue-50 text-blue-600 flex items-center justify-center mb-2">
+                <FileCheck className="w-4 h-4" />
+              </div>
+              <p className="font-bold text-xs text-slate-900">Cetak Surat Siswa</p>
+              <p className="text-[11px] text-slate-500">Keterangan Aktif / Mutasi Siswa</p>
+            </button>
 
-          <button
-            onClick={() => setCurrentView('ai-letters')}
-            className="p-3 bg-white border border-slate-200 rounded-lg hover:border-purple-400 hover:shadow-xs transition-all text-left"
-          >
-            <div className="w-7 h-7 rounded bg-purple-50 text-purple-600 flex items-center justify-center mb-2">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <p className="font-bold text-xs text-slate-900">Draf Naskah Dinas AI</p>
-            <p className="text-[11px] text-slate-500">Surat Panggilan, Undangan, Tugas</p>
-          </button>
-        </div>
+            {currentUser?.role === 'staf_tu' ? (
+              <button
+                onClick={() => setCurrentView('inventory')}
+                className="p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:shadow-xs transition-all text-left cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded bg-blue-50 text-blue-600 flex items-center justify-center mb-2">
+                  <Boxes className="w-4 h-4" />
+                </div>
+                <p className="font-bold text-xs text-slate-900">Sarana & Prasarana</p>
+                <p className="text-[11px] text-slate-500">Inventaris Ruang & Barang</p>
+              </button>
+            ) : (
+              <button
+                onClick={() => setCurrentView('finance')}
+                className="p-3 bg-white border border-slate-200 rounded-lg hover:border-emerald-400 hover:shadow-xs transition-all text-left cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
+                  <Receipt className="w-4 h-4" />
+                </div>
+                <p className="font-bold text-xs text-slate-900">Entri Kas & SPP</p>
+                <p className="text-[11px] text-slate-500">Cetak Kuitansi Resmi 2 Rangkap</p>
+              </button>
+            )}
+
+            <button
+              onClick={() => setCurrentView('mail')}
+              className="p-3 bg-white border border-slate-200 rounded-lg hover:border-amber-400 hover:shadow-xs transition-all text-left cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded bg-amber-50 text-amber-600 flex items-center justify-center mb-2">
+                <PlusCircle className="w-4 h-4" />
+              </div>
+              <p className="font-bold text-xs text-slate-900">
+                {currentUser?.role === 'kepsek' ? 'Disposisi Surat' : 'Registrasi Surat'}
+              </p>
+              <p className="text-[11px] text-slate-500">
+                {currentUser?.role === 'kepsek' ? 'Arahan Tindak Lanjut' : 'Agenda Surat Masuk / Keluar'}
+              </p>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('ai-letters')}
+              className="p-3 bg-white border border-slate-200 rounded-lg hover:border-purple-400 hover:shadow-xs transition-all text-left cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded bg-purple-50 text-purple-600 flex items-center justify-center mb-2">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <p className="font-bold text-xs text-slate-900">Draf Naskah Dinas AI</p>
+              <p className="text-[11px] text-slate-500">Surat Undangan, Tugas & Edaran</p>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
