@@ -6,7 +6,12 @@ import {
   SPPDData, 
   UndanganRapatGTKData, 
   PanggilanOrtuData,
-  UserSession
+  UserSession,
+  AppNotification,
+  SiswaBukuInduk,
+  TransaksiKas,
+  PembayaranSiswa,
+  AnggaranBOSItem
 } from '../types';
 import {
   INITIAL_SCHOOL_PROFILE,
@@ -16,6 +21,11 @@ import {
   INITIAL_SPPD,
   INITIAL_UNDANGAN_RAPAT,
   INITIAL_PANGGILAN_ORTU,
+  INITIAL_NOTIFICATIONS,
+  INITIAL_SISWA_BUKU_INDUK,
+  INITIAL_TRANSAKSI_KAS,
+  INITIAL_PEMBAYARAN_SISWA,
+  INITIAL_ANGGARAN_BOS,
   DEFAULT_USERS
 } from './constants';
 
@@ -28,6 +38,11 @@ const KEYS = {
   UNDANGAN: 'situ_undangan_rapat',
   PANGGILAN: 'situ_panggilan_ortu',
   USER_SESSION: 'situ_user_session',
+  NOTIFICATIONS: 'situ_app_notifications',
+  BUKU_INDUK: 'situ_siswa_buku_induk',
+  KAS: 'situ_transaksi_kas',
+  PEMBAYARAN: 'situ_pembayaran_siswa',
+  BOS: 'situ_anggaran_bos',
 };
 
 function safeGet<T>(key: string, defaultValue: T): T {
@@ -70,6 +85,21 @@ export const Storage = {
   getPanggilanOrtu: (): PanggilanOrtuData => safeGet(KEYS.PANGGILAN, INITIAL_PANGGILAN_ORTU),
   setPanggilanOrtu: (data: PanggilanOrtuData) => safeSet(KEYS.PANGGILAN, data),
 
+  getNotifications: (): AppNotification[] => safeGet(KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS),
+  setNotifications: (data: AppNotification[]) => safeSet(KEYS.NOTIFICATIONS, data),
+
+  getBukuInduk: (): SiswaBukuInduk[] => safeGet(KEYS.BUKU_INDUK, INITIAL_SISWA_BUKU_INDUK),
+  setBukuInduk: (data: SiswaBukuInduk[]) => safeSet(KEYS.BUKU_INDUK, data),
+
+  getTransaksiKas: (): TransaksiKas[] => safeGet(KEYS.KAS, INITIAL_TRANSAKSI_KAS),
+  setTransaksiKas: (data: TransaksiKas[]) => safeSet(KEYS.KAS, data),
+
+  getPembayaranSiswa: (): PembayaranSiswa[] => safeGet(KEYS.PEMBAYARAN, INITIAL_PEMBAYARAN_SISWA),
+  setPembayaranSiswa: (data: PembayaranSiswa[]) => safeSet(KEYS.PEMBAYARAN, data),
+
+  getAnggaranBOS: (): AnggaranBOSItem[] => safeGet(KEYS.BOS, INITIAL_ANGGARAN_BOS),
+  setAnggaranBOS: (data: AnggaranBOSItem[]) => safeSet(KEYS.BOS, data),
+
   getSession: (): UserSession | null => safeGet(KEYS.USER_SESSION, DEFAULT_USERS[0]),
   setSession: (data: UserSession | null) => safeSet(KEYS.USER_SESSION, data),
 
@@ -81,11 +111,16 @@ export const Storage = {
     safeSet(KEYS.SPPD, INITIAL_SPPD);
     safeSet(KEYS.UNDANGAN, INITIAL_UNDANGAN_RAPAT);
     safeSet(KEYS.PANGGILAN, INITIAL_PANGGILAN_ORTU);
+    safeSet(KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    safeSet(KEYS.BUKU_INDUK, INITIAL_SISWA_BUKU_INDUK);
+    safeSet(KEYS.KAS, INITIAL_TRANSAKSI_KAS);
+    safeSet(KEYS.PEMBAYARAN, INITIAL_PEMBAYARAN_SISWA);
+    safeSet(KEYS.BOS, INITIAL_ANGGARAN_BOS);
   },
 
   exportBackupJson: () => {
     const data = {
-      version: '2.0-SI-TATAUSAHA-LENGKAP',
+      version: '3.0-SI-TATAUSAHA-LENGKAP',
       exportedAt: new Date().toISOString(),
       profile: safeGet(KEYS.PROFILE, INITIAL_SCHOOL_PROFILE),
       suratMasuk: safeGet(KEYS.SURAT_MASUK, INITIAL_SURAT_MASUK),
@@ -94,6 +129,10 @@ export const Storage = {
       sppd: safeGet(KEYS.SPPD, INITIAL_SPPD),
       undangan: safeGet(KEYS.UNDANGAN, INITIAL_UNDANGAN_RAPAT),
       panggilan: safeGet(KEYS.PANGGILAN, INITIAL_PANGGILAN_ORTU),
+      bukuInduk: safeGet(KEYS.BUKU_INDUK, INITIAL_SISWA_BUKU_INDUK),
+      kas: safeGet(KEYS.KAS, INITIAL_TRANSAKSI_KAS),
+      pembayaran: safeGet(KEYS.PEMBAYARAN, INITIAL_PEMBAYARAN_SISWA),
+      anggaranBOS: safeGet(KEYS.BOS, INITIAL_ANGGARAN_BOS),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -114,6 +153,10 @@ export const Storage = {
       if (data.sppd) safeSet(KEYS.SPPD, data.sppd);
       if (data.undangan) safeSet(KEYS.UNDANGAN, data.undangan);
       if (data.panggilan) safeSet(KEYS.PANGGILAN, data.panggilan);
+      if (data.bukuInduk) safeSet(KEYS.BUKU_INDUK, data.bukuInduk);
+      if (data.kas) safeSet(KEYS.KAS, data.kas);
+      if (data.pembayaran) safeSet(KEYS.PEMBAYARAN, data.pembayaran);
+      if (data.anggaranBOS) safeSet(KEYS.BOS, data.anggaranBOS);
       return true;
     } catch {
       return false;

@@ -9,10 +9,7 @@ import {
   Clock, 
   ArrowUpRight,
   Eye,
-  Printer,
-  Download,
-  FolderArchive,
-  Code
+  Printer
 } from 'lucide-react';
 import { 
   SuratMasuk, 
@@ -33,8 +30,6 @@ interface DashboardViewProps {
   onOpenMutasiModal: () => void;
   onOpenLightbox: (file: ScanFileInfo) => void;
   onPrintDocument: (type: 'sppd' | 'undangan' | 'panggilan') => void;
-  onOpenCodeViewer?: () => void;
-  onDownloadZip?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -48,8 +43,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenMutasiModal,
   onOpenLightbox,
   onPrintDocument,
-  onOpenCodeViewer,
-  onDownloadZip,
 }) => {
   const pendingDisposisi = suratMasukList.filter(s => s.statusDisposisi === 'Belum').length;
   const pendingDapodik = mutasiList.filter(m => m.statusDapodik === 'Proses Tarik' || m.statusDapodik === 'Validasi Cabdis').length;
@@ -71,72 +64,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Kelola persuratan dinas berlogo ganda, titi mangsa kedinasan terpisah, mutasi siswa terhubung alur operator Dapodik, dan cetak SPPD serta undangan dinas secara instan.
           </p>
           <div className="flex flex-wrap items-center gap-3 mt-4">
-            <a
-              href="/SI-TATAUSAHA-LENGKAP.zip"
-              download="SI-TATAUSAHA-LENGKAP.zip"
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs transition-all shadow-md"
-            >
-              <Download className="w-4 h-4" />
-              <span>Unduh File ZIP Lengkap (.zip)</span>
-            </a>
             <button
               onClick={onOpenSuratMasukModal}
-              className="flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Daftarkan Surat Masuk</span>
             </button>
             <button
               onClick={onOpenSuratKeluarModal}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg text-xs font-semibold transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Registrasi Surat Keluar</span>
             </button>
             <button
               onClick={onOpenMutasiModal}
-              className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
               <span>Entri Mutasi Siswa Dapodik</span>
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Direct Download Announcement Card */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <FolderArchive className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-xs font-bold text-emerald-950 uppercase tracking-wide">
-              Paket Berkas ZIP Siap Ekstrak (SI-TATAUSAHA-LENGKAP.zip)
-            </h3>
-            <p className="text-xs text-emerald-800 mt-0.5">
-              Klik tombol di sebelah kanan untuk langsung mengunduh seluruh source code projek beserta panduan cara menjalankannya di laptop/PC Anda.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {onOpenCodeViewer && (
-            <button
-              onClick={onOpenCodeViewer}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-emerald-300 text-emerald-900 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
-            >
-              <Code className="w-4 h-4 text-emerald-700" />
-              <span>Jelajahi &amp; Salin Kode</span>
-            </button>
-          )}
-          <button
-            onClick={onDownloadZip}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm whitespace-nowrap cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            <span>Unduh Langsung (.ZIP)</span>
-          </button>
         </div>
       </div>
 

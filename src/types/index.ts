@@ -1,11 +1,23 @@
-export type Role = 'admin' | 'kepsek' | 'kasubag_tu' | 'staf_persuratan' | 'operator_dapodik';
+export type Role = 
+  | 'operator_superadmin' 
+  | 'tata_usaha' 
+  | 'bendahara' 
+  | 'kepala_sekolah'
+  // legacy aliases for backwards compatibility
+  | 'admin' 
+  | 'kasubag_tu' 
+  | 'staf_persuratan' 
+  | 'operator_dapodik' 
+  | 'kepsek';
 
 export interface UserSession {
   id: string;
   username: string;
+  password?: string;
   name: string;
   role: Role;
   roleLabel: string;
+  nip?: string;
   avatar?: string;
 }
 
@@ -92,6 +104,11 @@ export type MutasiStatusDapodik =
   | 'Dikeluarkan'
   | 'Validasi Cabdis';
 
+export type StatusPengajuanMutasi = 
+  | 'Menunggu Persetujuan Operator'
+  | 'Disetujui Operator'
+  | 'Ditolak Operator';
+
 export interface MutasiSiswa {
   id: string;
   jenis: 'masuk' | 'keluar';
@@ -108,8 +125,80 @@ export interface MutasiSiswa {
   nomorSuratRekomendasi: string;
   tanggalSuratRekomendasi: string;
   statusDapodik: MutasiStatusDapodik;
+  statusPengajuan: StatusPengajuanMutasi;
+  diajukanOleh?: string;
+  tanggalPengajuan?: string;
+  catatanOperator?: string;
   catatanDapodik: string;
   scanBerkas?: ScanFileInfo;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  type: 'mutasi_masuk' | 'mutasi_keluar' | 'persuratan' | 'keuangan' | 'sistem';
+  mutasiId?: string;
+  diajukanOleh?: string;
+}
+
+export interface TransaksiKas {
+  id: string;
+  tanggal: string;
+  kodeAkun: string;
+  keterangan: string;
+  jenis: 'masuk' | 'keluar';
+  kategori: 'BOS Reguler' | 'BOPD' | 'SPP/Iuran Siswa' | 'Komite' | 'Lain-lain';
+  jumlah: number;
+  saldo: number;
+  noBukti: string;
+  petugas: string;
+}
+
+export interface PembayaranSiswa {
+  id: string;
+  tanggal: string;
+  nis: string;
+  namaSiswa: string;
+  kelas: string;
+  jenisPembayaran: 'SPP Bulanan' | 'Iuran Komite' | 'Seragam & Modul' | 'Kegiatan Siswa';
+  bulan: string;
+  jumlah: number;
+  metode: 'Tunai' | 'Transfer Bank' | 'QRIS Dinas';
+  status: 'Lunas' | 'Sebagian';
+  noKwitansi: string;
+  penerima: string;
+}
+
+export interface AnggaranBOSItem {
+  id: string;
+  standarPendidikan: string;
+  kegiatan: string;
+  alokasiPagu: number;
+  realisasi: number;
+  sisaPagu: number;
+  persentase: number;
+}
+
+export interface SiswaBukuInduk {
+  id: string;
+  nis: string;
+  nisn: string;
+  namaLengkap: string;
+  jenisKelamin: 'Laki-laki' | 'Perempuan';
+  kelas: string;
+  tempatLahir: string;
+  tanggalLahir: string;
+  agama: string;
+  namaAyah: string;
+  namaIbu: string;
+  pekerjaanOrtu: string;
+  alamatSiswa: string;
+  telepon: string;
+  statusSiswa: 'Aktif' | 'Mutasi Masuk' | 'Mutasi Keluar' | 'Lulus';
+  sekolahAsal?: string;
 }
 
 export interface SPPDBiayaItem {

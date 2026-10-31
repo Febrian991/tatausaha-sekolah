@@ -6,7 +6,12 @@ import {
   SPPDData, 
   UndanganRapatGTKData, 
   PanggilanOrtuData,
-  UserSession
+  UserSession,
+  AppNotification,
+  SiswaBukuInduk,
+  TransaksiKas,
+  PembayaranSiswa,
+  AnggaranBOSItem
 } from '../types';
 
 export const INITIAL_SCHOOL_PROFILE: SchoolProfile = {
@@ -178,7 +183,11 @@ export const INITIAL_MUTASI_SISWA: MutasiSiswa[] = [
     nomorSuratRekomendasi: '420/120/SMA-BDI/X/2026',
     tanggalSuratRekomendasi: '2026-10-27',
     statusDapodik: 'Proses Tarik',
-    catatanDapodik: 'Berkas rekomendasi Cabdis DKI sudah lengkap. Operator sedang mengajukan approval tarik data di laman sp.datadik.',
+    statusPengajuan: 'Menunggu Persetujuan Operator',
+    diajukanOleh: 'Dra. Hj. Siti Nurjanah, M.M. (Tata Usaha)',
+    tanggalPengajuan: '2026-10-30 08:30',
+    catatanOperator: 'Menunggu pengecekan kelayakan daya tampung kelas XI MIPA 2 di Dapodik.',
+    catatanDapodik: 'Berkas rekomendasi Cabdis DKI sudah lengkap. Operator sedang memproses approval tarik data.',
     scanBerkas: {
       id: 'scan-mut-001',
       namaFile: 'Berkas_Mutasi_Farhan_DKI_Jabar.pdf',
@@ -204,7 +213,11 @@ export const INITIAL_MUTASI_SISWA: MutasiSiswa[] = [
     nomorSuratRekomendasi: '421.3/488/SMAN.1/X/2026',
     tanggalSuratRekomendasi: '2026-10-25',
     statusDapodik: 'Dikeluarkan',
-    catatanDapodik: 'Siswa telah resmi dinonaktifkan/dikeluarkan dari rombel Dapodik sekolah, surat mutasi keluar dan buku laporan pendidikan (Rapor) sudah diserahkan.',
+    statusPengajuan: 'Disetujui Operator',
+    diajukanOleh: 'Dra. Hj. Siti Nurjanah, M.M. (Tata Usaha)',
+    tanggalPengajuan: '2026-10-25 10:15',
+    catatanOperator: 'Disetujui. Surat mutasi keluar dan penonaktifan rombel Dapodik sudah selesai.',
+    catatanDapodik: 'Siswa telah resmi dinonaktifkan dari rombel Dapodik sekolah.',
     scanBerkas: {
       id: 'scan-mut-002',
       namaFile: 'Surat_Pindah_Aisyah_Putri_Signed.pdf',
@@ -230,7 +243,11 @@ export const INITIAL_MUTASI_SISWA: MutasiSiswa[] = [
     nomorSuratRekomendasi: '421/095/SMAN.5-SBY/2026',
     tanggalSuratRekomendasi: '2026-10-15',
     statusDapodik: 'Sudah Sinkron',
-    catatanDapodik: 'Telah terdaftar resmi pada database Dapodik sekolah semester ganjil 2026/2027 dan memiliki rombel aktif.',
+    statusPengajuan: 'Disetujui Operator',
+    diajukanOleh: 'Dra. Hj. Siti Nurjanah, M.M. (Tata Usaha)',
+    tanggalPengajuan: '2026-10-18 09:00',
+    catatanOperator: 'Disetujui & sinkronisasi sp.datadik sukses.',
+    catatanDapodik: 'Telah terdaftar resmi pada database Dapodik sekolah semester ganjil.',
     scanBerkas: {
       id: 'scan-mut-003',
       namaFile: 'Surat_Keterangan_Pindah_Kevin_SBY.pdf',
@@ -318,30 +335,368 @@ export const INITIAL_PANGGILAN_ORTU: PanggilanOrtuData = {
 export const DEFAULT_USERS: UserSession[] = [
   {
     id: 'u-1',
-    username: 'admin_tu',
-    name: 'Dra. Hj. Siti Nurjanah, M.M.',
-    role: 'kasubag_tu',
-    roleLabel: 'Kepala Subbagian Tata Usaha',
+    username: 'operator',
+    password: 'operator123',
+    name: 'Budi Santoso, S.Kom.',
+    role: 'operator_superadmin',
+    roleLabel: 'Super Admin & Operator Sekolah (Versi Lengkap)',
+    nip: '19870415 201101 1 008',
+  },
+  {
+    id: 'u-admin',
+    username: 'admin',
+    password: 'admin123',
+    name: 'Budi Santoso, S.Kom.',
+    role: 'operator_superadmin',
+    roleLabel: 'Super Admin & Operator Sekolah',
+    nip: '19870415 201101 1 008',
   },
   {
     id: 'u-2',
-    username: 'kepsek',
-    name: 'Dr. H. Ahmad Sudrajat, M.Pd.',
-    role: 'kepsek',
-    roleLabel: 'Kepala Sekolah',
+    username: 'tu',
+    password: 'tu123',
+    name: 'Dra. Hj. Siti Nurjanah, M.M.',
+    role: 'tata_usaha',
+    roleLabel: 'Tata Usaha (Buku Induk & Persuratan)',
+    nip: '19790815 200501 2 005',
+  },
+  {
+    id: 'u-tu-alias',
+    username: 'admin_tu',
+    password: 'tu123',
+    name: 'Dra. Hj. Siti Nurjanah, M.M.',
+    role: 'tata_usaha',
+    roleLabel: 'Tata Usaha (Buku Induk & Persuratan)',
+    nip: '19790815 200501 2 005',
   },
   {
     id: 'u-3',
-    username: 'operator_dapodik',
-    name: 'Budi Santoso, S.Kom.',
-    role: 'operator_dapodik',
-    roleLabel: 'Operator Dapodik & Kesiswaan',
+    username: 'bendahara',
+    password: 'bendahara123',
+    name: 'Eka Pratama, S.E.',
+    role: 'bendahara',
+    roleLabel: 'Bendahara Sekolah (Khusus Keuangan)',
+    nip: '19850312 201001 1 014',
   },
   {
     id: 'u-4',
-    username: 'staf_persuratan',
-    name: 'Rina Kusuma, A.Md.',
-    role: 'staf_persuratan',
-    roleLabel: 'Staf Administrasi Persuratan',
+    username: 'kepsek',
+    password: 'kepsek123',
+    name: 'Dr. H. Ahmad Sudrajat, M.Pd.',
+    role: 'kepala_sekolah',
+    roleLabel: 'Kepala Sekolah',
+    nip: '19740512 199802 1 002',
   },
+];
+
+export const INITIAL_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'notif-001',
+    title: 'Permohonan Mutasi Masuk Siswa',
+    message: 'Tata Usaha (Dra. Hj. Siti Nurjanah, M.M.) mengajukan permohonan mutasi masuk a.n. Muhammad Farhan Rayhan (NISN: 0078129034) dari SMA Bintang Cemerlang Jakarta.',
+    timestamp: '2026-10-30 08:35',
+    read: false,
+    type: 'mutasi_masuk',
+    mutasiId: 'mut-001',
+    diajukanOleh: 'Tata Usaha'
+  },
+  {
+    id: 'notif-002',
+    title: 'Pemberitahuan Surat Masuk Disposisi',
+    message: 'Surat Masuk baru dari Disdik Jabar No. 421.3/2890-Set.Disdik/2026 telah masuk dalam buku agenda TU.',
+    timestamp: '2026-10-29 11:20',
+    read: true,
+    type: 'persuratan',
+    diajukanOleh: 'Tata Usaha'
+  }
+];
+
+export const INITIAL_SISWA_BUKU_INDUK: SiswaBukuInduk[] = [
+  {
+    id: 'sis-001',
+    nis: '242510001',
+    nisn: '0071234567',
+    namaLengkap: 'Aditya Pratama Nugraha',
+    jenisKelamin: 'Laki-laki',
+    kelas: 'X-1',
+    tempatLahir: 'Bandung',
+    tanggalLahir: '2009-03-15',
+    agama: 'Islam',
+    namaAyah: 'Bambang Nugraha',
+    namaIbu: 'Sri Wahyuni',
+    pekerjaanOrtu: 'Wiraswasta',
+    alamatSiswa: 'Jl. Dago Asri No. 12, Bandung',
+    telepon: '081234567890',
+    statusSiswa: 'Aktif',
+    sekolahAsal: 'SMP Negeri 2 Bandung'
+  },
+  {
+    id: 'sis-002',
+    nis: '242510002',
+    nisn: '0079876543',
+    namaLengkap: 'Anindya Kirana Putri',
+    jenisKelamin: 'Perempuan',
+    kelas: 'X-1',
+    tempatLahir: 'Bandung',
+    tanggalLahir: '2009-07-22',
+    agama: 'Islam',
+    namaAyah: 'Dedi Kurniawan',
+    namaIbu: 'Lilis Suryani',
+    pekerjaanOrtu: 'PNS',
+    alamatSiswa: 'Jl. Cihampelas No. 88, Bandung',
+    telepon: '081398765432',
+    statusSiswa: 'Aktif',
+    sekolahAsal: 'SMP Negeri 5 Bandung'
+  },
+  {
+    id: 'sis-003',
+    nis: '242510189',
+    nisn: '0078129034',
+    namaLengkap: 'Muhammad Farhan Rayhan',
+    jenisKelamin: 'Laki-laki',
+    kelas: 'XI MIPA 2',
+    tempatLahir: 'Jakarta',
+    tanggalLahir: '2008-05-14',
+    agama: 'Islam',
+    namaAyah: 'Hendro Rayhan',
+    namaIbu: 'Rina Maryati',
+    pekerjaanOrtu: 'BUMN',
+    alamatSiswa: 'Jl. Riau No. 45, Bandung',
+    telepon: '082155667788',
+    statusSiswa: 'Mutasi Masuk',
+    sekolahAsal: 'SMA Bintang Cemerlang Jakarta'
+  },
+  {
+    id: 'sis-004',
+    nis: '232410045',
+    nisn: '0069348120',
+    namaLengkap: 'Aisyah Putri Andini',
+    jenisKelamin: 'Perempuan',
+    kelas: 'XII IPS 1',
+    tempatLahir: 'Bandung',
+    tanggalLahir: '2007-08-22',
+    agama: 'Islam',
+    namaAyah: 'Agus Subandi',
+    namaIbu: 'Endang Setyowati',
+    pekerjaanOrtu: 'Karyawan Swasta',
+    alamatSiswa: 'Jl. Buah Batu No. 102, Bandung',
+    telepon: '085712345678',
+    statusSiswa: 'Mutasi Keluar',
+    sekolahAsal: 'SMA Negeri 1 Teladan Nusantara'
+  },
+  {
+    id: 'sis-005',
+    nis: '242510204',
+    nisn: '0081239901',
+    namaLengkap: 'Kevin Danendra Wijaya',
+    jenisKelamin: 'Laki-laki',
+    kelas: 'X-4',
+    tempatLahir: 'Surabaya',
+    tanggalLahir: '2009-01-09',
+    agama: 'Kristen',
+    namaAyah: 'Mayor Hendra Wijaya',
+    namaIbu: 'Maria Ratna',
+    pekerjaanOrtu: 'TNI-AD',
+    alamatSiswa: 'Komplek Secapa AD, Hegarmanah, Bandung',
+    telepon: '081288990011',
+    statusSiswa: 'Mutasi Masuk',
+    sekolahAsal: 'SMA Negeri 5 Surabaya'
+  }
+];
+
+export const INITIAL_TRANSAKSI_KAS: TransaksiKas[] = [
+  {
+    id: 'kas-001',
+    tanggal: '2026-10-02',
+    kodeAkun: '4.1.1.01',
+    keterangan: 'Penerimaan Dana BOS Reguler Tahap II Gelombang 2',
+    jenis: 'masuk',
+    kategori: 'BOS Reguler',
+    jumlah: 185000000,
+    saldo: 185000000,
+    noBukti: 'BKM/BOS/2026/014',
+    petugas: 'Eka Pratama, S.E.'
+  },
+  {
+    id: 'kas-002',
+    tanggal: '2026-10-06',
+    kodeAkun: '5.2.1.02',
+    keterangan: 'Pembelian Kertas HVS & ATK Administrasi Persuratan TU',
+    jenis: 'keluar',
+    kategori: 'BOS Reguler',
+    jumlah: 4850000,
+    saldo: 180150000,
+    noBukti: 'BKK/BOS/2026/089',
+    petugas: 'Eka Pratama, S.E.'
+  },
+  {
+    id: 'kas-003',
+    tanggal: '2026-10-12',
+    kodeAkun: '4.1.2.03',
+    keterangan: 'Penerimaan Rekap SPP & Iuran Komite Siswa Kelas X-XII (Minggu II)',
+    jenis: 'masuk',
+    kategori: 'SPP/Iuran Siswa',
+    jumlah: 24500000,
+    saldo: 204650000,
+    noBukti: 'BKM/KOM/2026/045',
+    petugas: 'Eka Pratama, S.E.'
+  },
+  {
+    id: 'kas-004',
+    tanggal: '2026-10-18',
+    kodeAkun: '5.2.2.15',
+    keterangan: 'Pembayaran Uang Harian & Transport Perjalanan Dinas Guru OSN (SPPD)',
+    jenis: 'keluar',
+    kategori: 'BOS Reguler',
+    jumlah: 2890000,
+    saldo: 201760000,
+    noBukti: 'BKK/SPPD/2026/032',
+    petugas: 'Eka Pratama, S.E.'
+  },
+  {
+    id: 'kas-005',
+    tanggal: '2026-10-25',
+    kodeAkun: '5.2.3.01',
+    keterangan: 'Langganan Internet Dedicated Fiber Optik CBT & Laboratorium Komputer',
+    jenis: 'keluar',
+    kategori: 'BOS Reguler',
+    jumlah: 3750000,
+    saldo: 198010000,
+    noBukti: 'BKK/BOS/2026/094',
+    petugas: 'Eka Pratama, S.E.'
+  }
+];
+
+export const INITIAL_PEMBAYARAN_SISWA: PembayaranSiswa[] = [
+  {
+    id: 'pemb-001',
+    tanggal: '2026-10-28',
+    nis: '242510001',
+    namaSiswa: 'Aditya Pratama Nugraha',
+    kelas: 'X-1',
+    jenisPembayaran: 'SPP Bulanan',
+    bulan: 'Oktober 2026',
+    jumlah: 250000,
+    metode: 'QRIS Dinas',
+    status: 'Lunas',
+    noKwitansi: 'KWT/2026/X/00142',
+    penerima: 'Eka Pratama, S.E. (Bendahara)'
+  },
+  {
+    id: 'pemb-002',
+    tanggal: '2026-10-28',
+    nis: '242510002',
+    namaSiswa: 'Anindya Kirana Putri',
+    kelas: 'X-1',
+    jenisPembayaran: 'SPP Bulanan',
+    bulan: 'Oktober 2026',
+    jumlah: 250000,
+    metode: 'Transfer Bank',
+    status: 'Lunas',
+    noKwitansi: 'KWT/2026/X/00143',
+    penerima: 'Eka Pratama, S.E. (Bendahara)'
+  },
+  {
+    id: 'pemb-003',
+    tanggal: '2026-10-29',
+    nis: '242510189',
+    namaSiswa: 'Muhammad Farhan Rayhan',
+    kelas: 'XI MIPA 2',
+    jenisPembayaran: 'Iuran Komite',
+    bulan: 'Semester Ganjil 2026',
+    jumlah: 500000,
+    metode: 'Tunai',
+    status: 'Lunas',
+    noKwitansi: 'KWT/2026/X/00144',
+    penerima: 'Eka Pratama, S.E. (Bendahara)'
+  },
+  {
+    id: 'pemb-004',
+    tanggal: '2026-10-30',
+    nis: '242510204',
+    namaSiswa: 'Kevin Danendra Wijaya',
+    kelas: 'X-4',
+    jenisPembayaran: 'Seragam & Modul',
+    bulan: 'Tahun Ajaran 2026/2027',
+    jumlah: 650000,
+    metode: 'Tunai',
+    status: 'Lunas',
+    noKwitansi: 'KWT/2026/X/00145',
+    penerima: 'Eka Pratama, S.E. (Bendahara)'
+  }
+];
+
+export const INITIAL_ANGGARAN_BOS: AnggaranBOSItem[] = [
+  {
+    id: 'bos-1',
+    standarPendidikan: '1. Standar Kompetensi Lulusan',
+    kegiatan: 'Pelaksanaan Try Out, Asesmen Bakat Minat (ABM), & Pengayaan CBT',
+    alokasiPagu: 35000000,
+    realisasi: 28500000,
+    sisaPagu: 6500000,
+    persentase: 81.4
+  },
+  {
+    id: 'bos-2',
+    standarPendidikan: '2. Standar Isi',
+    kegiatan: 'Pengembangan Modul Ajar Kurikulum Merdeka & KOSP',
+    alokasiPagu: 25000000,
+    realisasi: 21000000,
+    sisaPagu: 4000000,
+    persentase: 84.0
+  },
+  {
+    id: 'bos-3',
+    standarPendidikan: '3. Standar Proses',
+    kegiatan: 'Penyediaan Alat Praktikum, Buku Teks Utama, & Ekstrakurikuler',
+    alokasiPagu: 60000000,
+    realisasi: 49500000,
+    sisaPagu: 10500000,
+    persentase: 82.5
+  },
+  {
+    id: 'bos-4',
+    standarPendidikan: '4. Standar Penilaian Pendidikan',
+    kegiatan: 'Penilaian Sumatif Tengah & Akhir Semester Berbasis Digital',
+    alokasiPagu: 30000000,
+    realisasi: 24200000,
+    sisaPagu: 5800000,
+    persentase: 80.6
+  },
+  {
+    id: 'bos-5',
+    standarPendidikan: '5. Standar Pendidik & Tenaga Kependidikan',
+    kegiatan: 'Peningkatan Kompetensi Guru & Bimtek Administrasi TU',
+    alokasiPagu: 40000000,
+    realisasi: 31800000,
+    sisaPagu: 8200000,
+    persentase: 79.5
+  },
+  {
+    id: 'bos-6',
+    standarPendidikan: '6. Standar Sarana & Prasarana',
+    kegiatan: 'Pemeliharaan Ruang Kelas, Komputer Laboratorium, & Sanitasi',
+    alokasiPagu: 85000000,
+    realisasi: 68400000,
+    sisaPagu: 16600000,
+    persentase: 80.4
+  },
+  {
+    id: 'bos-7',
+    standarPendidikan: '7. Standar Pengelolaan',
+    kegiatan: 'Pengadaan ATK, Cetak Buku Induk, & Administrasi Persuratan Dinas',
+    alokasiPagu: 35000000,
+    realisasi: 27900000,
+    sisaPagu: 7100000,
+    persentase: 79.7
+  },
+  {
+    id: 'bos-8',
+    standarPendidikan: '8. Standar Pembiayaan',
+    kegiatan: 'Langganan Daya & Jasa Listrik, Air, & Internet Sekolah',
+    alokasiPagu: 50000000,
+    realisasi: 39500000,
+    sisaPagu: 10500000,
+    persentase: 79.0
+  }
 ];

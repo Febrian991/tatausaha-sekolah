@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   UserSession, 
   SchoolProfile, 
@@ -8,16 +8,23 @@ import {
   SPPDData, 
   UndanganRapatGTKData, 
   PanggilanOrtuData, 
-  ScanFileInfo 
+  ScanFileInfo,
+  AppNotification,
+  SiswaBukuInduk,
+  TransaksiKas,
+  PembayaranSiswa,
+  AnggaranBOSItem
 } from './types';
 import { Storage } from './lib/storage';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
 import { DashboardView } from './components/views/DashboardView';
+import { BukuIndukView } from './components/views/BukuIndukView';
 import { SuratMasukView } from './components/views/SuratMasukView';
 import { SuratKeluarView } from './components/views/SuratKeluarView';
 import { MutasiSiswaView } from './components/views/MutasiSiswaView';
 import { TemplateSuratView } from './components/views/TemplateSuratView';
+import { KeuanganView } from './components/views/KeuanganView';
 import { SettingsView } from './components/views/SettingsView';
 import { LoginView } from './components/views/LoginView';
 
@@ -28,8 +35,6 @@ import { DisposisiModal } from './components/modals/DisposisiModal';
 import { MutasiModal } from './components/modals/MutasiModal';
 import { LightboxViewer } from './components/common/LightboxViewer';
 import { PrintSuratModal, PrintDocumentType } from './components/modals/PrintSuratModal';
-import { CodeViewerModal } from './components/modals/CodeViewerModal';
-import { downloadProjectZip } from './lib/downloadHelper';
 
 export default function App() {
   // Session
@@ -44,6 +49,13 @@ export default function App() {
   const [sppdData, setSppdData] = useState<SPPDData>(() => Storage.getSPPD());
   const [undanganData, setUndanganData] = useState<UndanganRapatGTKData>(() => Storage.getUndanganRapat());
   const [panggilanData, setPanggilanData] = useState<PanggilanOrtuData>(() => Storage.getPanggilanOrtu());
+
+  // New Data Modules: Notifications, Buku Induk, Keuangan
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => Storage.getNotifications());
+  const [bukuIndukList, setBukuIndukList] = useState<SiswaBukuInduk[]>(() => Storage.getBukuInduk());
+  const [transaksiKasList, setTransaksiKasList] = useState<TransaksiKas[]>(() => Storage.getTransaksiKas());
+  const [pembayaranSiswaList, setPembayaranSiswaList] = useState<PembayaranSiswa[]>(() => Storage.getPembayaranSiswa());
+  const [anggaranBOSList, setAnggaranBOSList] = useState<AnggaranBOSItem[]>(() => Storage.getAnggaranBOS());
 
   // Modal States
   const [isSuratMasukModalOpen, setIsSuratMasukModalOpen] = useState(false);
@@ -61,17 +73,46 @@ export default function App() {
 
   const [activeLightboxFile, setActiveLightboxFile] = useState<ScanFileInfo | null>(null);
   const [activePrintDocument, setActivePrintDocument] = useState<PrintDocumentType | null>(null);
-  const [isCodeViewerOpen, setIsCodeViewerOpen] = useState(false);
+
+  // Sync initial view with user role
+  useEffect(() => {
+    if (user?.role === 'bendahara') {
+      setCurrentView('keuangan');
+    } else if (user?.role === 'tata_usaha' || user?.role === 'kasubag_tu' || user?.role === 'staf_persuratan') {
+      if (currentView === 'keuangan' || currentView === 'settings') {
+        setCurrentView('dashboard');
+      }
+    }
+  }, [user]);
 
   // Authentication Handlers
   const handleLogin = (newUser: UserSession) => {
     setUser(newUser);
     Storage.setSession(newUser);
+    if (newUser.role === 'bendahara') {
+      setCurrentView('keuangan');
+    } else {
+      setCurrentView('dashboard');
+    }
   };
 
   const handleLogout = () => {
     setUser(null);
     Storage.setSession(null);
+  };
+
+  // Notification Handlers
+  const handleMarkNotificationRead = (id: string) => {
+    setNotifications(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
+      Storage.setNotifications(updated);
+      return updated;
+    });
+  };
+
+  const handleClearNotifications = () => {
+    setNotifications([]);
+    Storage.setNotifications([]);
   };
 
   // Surat Masuk Handlers
@@ -114,7 +155,7 @@ export default function App() {
     }
   };
 
-  // Mutasi Siswa Handlers
+  // Mutasi Siswa & Notification Workflow Handlers
   const handleSaveMutasi = (saved: MutasiSiswa) => {
     setMutasiList(prev => {
       const exists = prev.some(m => m.id === saved.id);
@@ -122,6 +163,55 @@ export default function App() {
       Storage.setMutasi(updated);
       return updated;
     });
+
+    // Automatically trigger notification for Operator Sekolah
+    const newNotif: AppNotification = {
+      id: `notif-${Date.now()}`,
+      title: `Permohonan Mutasi Siswa ${saved.jenis === 'masuk' ? 'Masuk' : 'Keluar'}`,
+      message: `${user?.name || 'Tata Usaha'} mengajukan berkas mutasi ${saved.jenis}: ${saved.namaSiswa} (NISN: ${saved.nisn}, Kelas: ${saved.kelas}). Menunggu verifikasi Operator Dapodik & Super Admin.`,
+      timestamp: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      read: false,
+      type: saved.jenis === 'masuk' ? 'mutasi_masuk' : 'mutasi_keluar',
+      mutasiId: saved.id,
+      diajukanOleh: user?.name || 'Tata Usaha',
+    };
+
+    setNotifications(prev => {
+      const updatedNotifs = [newNotif, ...prev];
+      Storage.setNotifications(updatedNotifs);
+      return updatedNotifs;
+    });
+
+    // Also sync to Buku Induk if mutasi masuk
+    if (saved.jenis === 'masuk') {
+      setBukuIndukList(prev => {
+        const existingSiswa = prev.find(s => s.nisn === saved.nisn);
+        if (!existingSiswa) {
+          const newSiswa: SiswaBukuInduk = {
+            id: `sis-${Date.now()}`,
+            nis: saved.nis || `${Math.floor(24251000 + Math.random() * 900)}`,
+            nisn: saved.nisn,
+            namaLengkap: saved.namaSiswa,
+            jenisKelamin: saved.jenisKelamin,
+            kelas: saved.kelas,
+            tempatLahir: saved.tempatTanggalLahir.split(',')[0] || 'Bandung',
+            tanggalLahir: '2009-01-01',
+            agama: 'Islam',
+            namaAyah: 'Orang Tua Siswa',
+            namaIbu: 'Ibu Siswa',
+            pekerjaanOrtu: 'PNS/Swasta',
+            alamatSiswa: 'Alamat Siswa Mutasi Masuk',
+            telepon: '08123456789',
+            statusSiswa: 'Mutasi Masuk',
+            sekolahAsal: saved.sekolahAsal,
+          };
+          const updated = [newSiswa, ...prev];
+          Storage.setBukuInduk(updated);
+          return updated;
+        }
+        return prev;
+      });
+    }
   };
 
   const handleDeleteMutasi = (id: string) => {
@@ -140,6 +230,105 @@ export default function App() {
       Storage.setMutasi(updated);
       return updated;
     });
+  };
+
+  // Operator Sekolah Approval Actions
+  const handleApproveMutasi = (id: string) => {
+    setMutasiList(prev => {
+      const target = prev.find(m => m.id === id);
+      if (!target) return prev;
+      const updated = prev.map(m => m.id === id ? {
+        ...m,
+        statusPengajuan: 'Disetujui Operator' as const,
+        statusDapodik: (m.jenis === 'masuk' ? 'Sudah Sinkron' : 'Dikeluarkan') as MutasiSiswa['statusDapodik'],
+        catatanOperator: `Disetujui dan disinkronkan ke Dapodik oleh ${user?.name || 'Operator Sekolah'}.`,
+      } : m);
+      Storage.setMutasi(updated);
+      return updated;
+    });
+
+    const notif: AppNotification = {
+      id: `notif-${Date.now()}`,
+      title: 'Mutasi Telah Disetujui Operator',
+      message: `Permohonan mutasi siswa telah disetujui oleh Operator Sekolah & disinkronkan ke laman sp.datadik.`,
+      timestamp: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      read: false,
+      type: 'sistem',
+    };
+    setNotifications(prev => {
+      const updated = [notif, ...prev];
+      Storage.setNotifications(updated);
+      return updated;
+    });
+  };
+
+  const handleRejectMutasi = (id: string, catatan: string) => {
+    setMutasiList(prev => {
+      const updated = prev.map(m => m.id === id ? {
+        ...m,
+        statusPengajuan: 'Ditolak Operator' as const,
+        catatanOperator: catatan,
+      } : m);
+      Storage.setMutasi(updated);
+      return updated;
+    });
+  };
+
+  // Buku Induk Handlers
+  const handleAddSiswaBukuInduk = (siswa: SiswaBukuInduk) => {
+    setBukuIndukList(prev => {
+      const updated = [siswa, ...prev];
+      Storage.setBukuInduk(updated);
+      return updated;
+    });
+  };
+
+  const handleEditSiswaBukuInduk = (siswa: SiswaBukuInduk) => {
+    setBukuIndukList(prev => {
+      const updated = prev.map(s => s.id === siswa.id ? siswa : s);
+      Storage.setBukuInduk(updated);
+      return updated;
+    });
+  };
+
+  const handleDeleteSiswaBukuInduk = (id: string) => {
+    setBukuIndukList(prev => {
+      const updated = prev.filter(s => s.id !== id);
+      Storage.setBukuInduk(updated);
+      return updated;
+    });
+  };
+
+  // Keuangan Handlers
+  const handleAddTransaksiKas = (item: TransaksiKas) => {
+    setTransaksiKasList(prev => {
+      const updated = [item, ...prev];
+      Storage.setTransaksiKas(updated);
+      return updated;
+    });
+  };
+
+  const handleAddPembayaranSiswa = (item: PembayaranSiswa) => {
+    setPembayaranSiswaList(prev => {
+      const updated = [item, ...prev];
+      Storage.setPembayaranSiswa(updated);
+      return updated;
+    });
+
+    // Also auto-record into BKU kas masuk
+    const autoKas: TransaksiKas = {
+      id: `kas-auto-${Date.now()}`,
+      tanggal: item.tanggal,
+      kodeAkun: '4.1.2.03',
+      keterangan: `Penerimaan ${item.jenisPembayaran} a.n. ${item.namaSiswa} (${item.kelas}) - ${item.noKwitansi}`,
+      jenis: 'masuk',
+      kategori: 'SPP/Iuran Siswa',
+      jumlah: item.jumlah,
+      saldo: (transaksiKasList[0]?.saldo || 0) + item.jumlah,
+      noBukti: item.noKwitansi,
+      petugas: item.penerima,
+    };
+    handleAddTransaksiKas(autoKas);
   };
 
   // Settings & Templates Handlers
@@ -172,6 +361,11 @@ export default function App() {
     setSppdData(Storage.getSPPD());
     setUndanganData(Storage.getUndanganRapat());
     setPanggilanData(Storage.getPanggilanOrtu());
+    setNotifications(Storage.getNotifications());
+    setBukuIndukList(Storage.getBukuInduk());
+    setTransaksiKasList(Storage.getTransaksiKas());
+    setPembayaranSiswaList(Storage.getPembayaranSiswa());
+    setAnggaranBOSList(Storage.getAnggaranBOS());
   };
 
   const handleImportBackup = (jsonStr: string) => {
@@ -184,6 +378,11 @@ export default function App() {
       setSppdData(Storage.getSPPD());
       setUndanganData(Storage.getUndanganRapat());
       setPanggilanData(Storage.getPanggilanOrtu());
+      setNotifications(Storage.getNotifications());
+      setBukuIndukList(Storage.getBukuInduk());
+      setTransaksiKasList(Storage.getTransaksiKas());
+      setPembayaranSiswaList(Storage.getPembayaranSiswa());
+      setAnggaranBOSList(Storage.getAnggaranBOS());
     }
     return ok;
   };
@@ -191,30 +390,22 @@ export default function App() {
   // If user is not logged in, show secure Login View
   if (!user) {
     return (
-      <>
-        <LoginView
-          profile={profile}
-          onLoginSuccess={handleLogin}
-          onOpenCodeViewer={() => setIsCodeViewerOpen(true)}
-          onDownloadZip={downloadProjectZip}
-        />
-        <CodeViewerModal
-          isOpen={isCodeViewerOpen}
-          onClose={() => setIsCodeViewerOpen(false)}
-          onDownloadZip={downloadProjectZip}
-        />
-      </>
+      <LoginView
+        profile={profile}
+        onLoginSuccess={handleLogin}
+      />
     );
   }
 
   const pendingDisposisiCount = suratMasukList.filter(s => s.statusDisposisi === 'Belum').length;
-  const pendingMutasiCount = mutasiList.filter(m => m.statusDapodik === 'Proses Tarik' || m.statusDapodik === 'Validasi Cabdis').length;
+  const pendingMutasiCount = mutasiList.filter(m => m.statusPengajuan === 'Menunggu Persetujuan Operator').length;
 
   return (
     <div className="min-h-screen flex bg-slate-100 text-slate-800 antialiased font-sans">
       {/* Sidebar Navigation */}
       <Sidebar
         currentView={currentView}
+        user={user}
         onSelectView={setCurrentView}
         pendingDisposisiCount={pendingDisposisiCount}
         pendingMutasiCount={pendingMutasiCount}
@@ -227,10 +418,12 @@ export default function App() {
           currentView={currentView}
           user={user}
           profile={profile}
+          notifications={notifications}
           onLogout={handleLogout}
           onOpenQuickPrint={() => setActivePrintDocument({ type: 'undangan', data: undanganData })}
-          onOpenCodeViewer={() => setIsCodeViewerOpen(true)}
-          onDownloadZip={downloadProjectZip}
+          onNavigate={setCurrentView}
+          onMarkNotificationRead={handleMarkNotificationRead}
+          onClearNotifications={handleClearNotifications}
         />
 
         {/* Viewport Content */}
@@ -242,8 +435,6 @@ export default function App() {
               mutasiList={mutasiList}
               profile={profile}
               onNavigate={setCurrentView}
-              onOpenCodeViewer={() => setIsCodeViewerOpen(true)}
-              onDownloadZip={downloadProjectZip}
               onOpenSuratMasukModal={() => {
                 setEditingSuratMasuk(null);
                 setIsSuratMasukModalOpen(true);
@@ -263,6 +454,17 @@ export default function App() {
                 else if (type === 'undangan') setActivePrintDocument({ type: 'undangan', data: undanganData });
                 else if (type === 'panggilan') setActivePrintDocument({ type: 'panggilan', data: panggilanData });
               }}
+            />
+          )}
+
+          {currentView === 'buku-induk' && (
+            <BukuIndukView
+              user={user}
+              profile={profile}
+              bukuIndukList={bukuIndukList}
+              onAddSiswa={handleAddSiswaBukuInduk}
+              onEditSiswa={handleEditSiswaBukuInduk}
+              onDeleteSiswa={handleDeleteSiswaBukuInduk}
             />
           )}
 
@@ -307,6 +509,7 @@ export default function App() {
 
           {currentView === 'mutasi' && (
             <MutasiSiswaView
+              user={user}
               mutasiList={mutasiList}
               onAddMutasi={(jenis) => {
                 setEditingMutasi(null);
@@ -323,6 +526,8 @@ export default function App() {
                 setActivePrintDocument({ type: 'mutasi', data: item });
               }}
               onUpdateStatusDapodik={handleUpdateStatusDapodik}
+              onApproveMutasi={handleApproveMutasi}
+              onRejectMutasi={handleRejectMutasi}
             />
           )}
 
@@ -340,6 +545,18 @@ export default function App() {
                 else if (type === 'undangan') setActivePrintDocument({ type: 'undangan', data: undanganData });
                 else if (type === 'panggilan') setActivePrintDocument({ type: 'panggilan', data: panggilanData });
               }}
+            />
+          )}
+
+          {currentView === 'keuangan' && (
+            <KeuanganView
+              user={user}
+              profile={profile}
+              transaksiKasList={transaksiKasList}
+              pembayaranSiswaList={pembayaranSiswaList}
+              anggaranBOSList={anggaranBOSList}
+              onAddTransaksiKas={handleAddTransaksiKas}
+              onAddPembayaranSiswa={handleAddPembayaranSiswa}
             />
           )}
 
@@ -396,6 +613,7 @@ export default function App() {
 
       {/* MODAL 4: Mutasi Siswa Dapodik */}
       <MutasiModal
+        user={user}
         mutasi={editingMutasi}
         defaultJenis={mutasiDefaultJenis}
         isOpen={isMutasiModalOpen}
@@ -418,13 +636,6 @@ export default function App() {
         profile={profile}
         isOpen={!!activePrintDocument}
         onClose={() => setActivePrintDocument(null)}
-      />
-
-      {/* MODAL 7: Source Code Explorer & Downloader */}
-      <CodeViewerModal
-        isOpen={isCodeViewerOpen}
-        onClose={() => setIsCodeViewerOpen(false)}
-        onDownloadZip={downloadProjectZip}
       />
     </div>
   );

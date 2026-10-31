@@ -4,6 +4,7 @@ import { MutasiSiswa, MutasiStatusDapodik, ScanFileInfo } from '../../types';
 import { SAMPLE_SCAN_DOCUMENT_IMAGE } from '../../lib/constants';
 
 interface MutasiModalProps {
+  user?: import('../../types').UserSession | null;
   mutasi: MutasiSiswa | null;
   defaultJenis?: 'masuk' | 'keluar';
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface MutasiModalProps {
 }
 
 export const MutasiModal: React.FC<MutasiModalProps> = ({
+  user,
   mutasi,
   defaultJenis = 'masuk',
   isOpen,
@@ -80,6 +82,10 @@ export const MutasiModal: React.FC<MutasiModalProps> = ({
       nomorSuratRekomendasi,
       tanggalSuratRekomendasi,
       statusDapodik,
+      statusPengajuan: mutasi?.statusPengajuan || 'Menunggu Persetujuan Operator',
+      diajukanOleh: mutasi?.diajukanOleh || (user ? `${user.name} (${user.roleLabel})` : 'Tata Usaha'),
+      tanggalPengajuan: mutasi?.tanggalPengajuan || new Date().toLocaleString('id-ID'),
+      catatanOperator: mutasi?.catatanOperator || '',
       catatanDapodik,
       scanBerkas: scanBerkas || (mutasi?.scanBerkas ? mutasi.scanBerkas : undefined),
     };
