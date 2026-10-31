@@ -8,8 +8,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  ArrowRight,
   ShieldAlert,
+  Download,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.tsx';
 
@@ -157,43 +157,36 @@ export const LoginView: React.FC = () => {
               <span className="font-semibold text-slate-500">5 Tingkat Hak Akses</span>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-600 space-y-2">
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-600">
               <div className="flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
+                <ShieldAlert className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  <strong>Tingkat Wewenang:</strong> Super Admin &gt; Admin Tata Usaha &gt; Bendahara &gt; Kepala Sekolah (Plus Operator). Fitur terlengkap dan Reset Akun berada di Super Admin.
+                  <strong>Akses Terproteksi:</strong> Masuk menggunakan akun kedinasan yang telah didaftarkan. Hubungi Super Admin jika Anda mengalami kendala login atau membutuhkan reset kata sandi.
                 </p>
               </div>
-
-              <details className="text-[10px] text-slate-500 border-t border-slate-200 pt-2 cursor-pointer">
-                <summary className="font-semibold text-blue-600 hover:text-blue-800 select-none">
-                  Lihat Kredensial Akun Default (Klik di sini)
-                </summary>
-                <div className="mt-2 space-y-1 font-mono text-[10px] bg-white p-2.5 rounded-lg border border-slate-200 text-slate-700">
-                  <div className="flex justify-between">
-                    <span className="text-violet-700 font-bold">1. Super Admin:</span>
-                    <span>superadmin / superadmin123</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-700 font-bold">2. Admin TU:</span>
-                    <span>admin / admin123</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-emerald-700 font-bold">3. Bendahara:</span>
-                    <span>bendahara / bendahara123</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-purple-700 font-bold">4. Kepala Sekolah:</span>
-                    <span>kepsek / kepsek123</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-amber-700 font-bold">5. Operator:</span>
-                    <span>operator / operator123</span>
-                  </div>
-                </div>
-              </details>
             </div>
           </div>
+        </div>
+
+        {/* Tombol Unduh Langsung Berkas ZIP Proyek */}
+        <div className="mt-4 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl p-4 shadow-xl flex items-center justify-between gap-3 text-white">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+              <Download className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-emerald-300">Unduh Berkas Proyek (.ZIP)</div>
+              <div className="text-[11px] text-slate-300">Source code lengkap siap deploy ke Vercel / GitHub</div>
+            </div>
+          </div>
+          <a
+            href="/SI-TATAUSAHA-LENGKAP.zip"
+            download="SI-TATAUSAHA-LENGKAP.zip"
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Unduh Sekarang</span>
+          </a>
         </div>
       </main>
 
