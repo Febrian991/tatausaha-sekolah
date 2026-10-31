@@ -1,480 +1,465 @@
 import React, { useState } from 'react';
+import { MutasiSiswa, SchoolProfile } from '../../types/situ';
 import { 
-  ArrowRightLeft, 
+  Users, 
+  UserPlus, 
+  ArrowUpRight, 
+  ArrowDownLeft, 
   Search, 
-  Plus, 
-  Eye, 
   Printer, 
-  Trash2, 
-  Edit3, 
-  AlertCircle, 
-  RefreshCw, 
-  UserCheck,
-  CheckCircle,
-  XCircle,
-  Clock,
-  ShieldCheck,
-  BellRing
+  Download, 
+  CheckCircle2, 
+  Clock, 
+  FileSpreadsheet,
+  PlusCircle,
+  X
 } from 'lucide-react';
-import { MutasiSiswa, ScanFileInfo, UserSession, StatusPengajuanMutasi } from '../../types';
+import { formatTanggalIndonesia } from '../../utils/mockSituData';
 
 interface MutasiSiswaViewProps {
-  user: UserSession;
+  profile: SchoolProfile;
   mutasiList: MutasiSiswa[];
-  onAddMutasi: (jenis: 'masuk' | 'keluar') => void;
-  onEditMutasi: (mutasi: MutasiSiswa) => void;
-  onDeleteMutasi: (id: string) => void;
-  onOpenLightbox: (file: ScanFileInfo) => void;
-  onPrintMutasi: (mutasi: MutasiSiswa) => void;
-  onUpdateStatusDapodik: (id: string, newStatus: MutasiSiswa['statusDapodik']) => void;
-  onApproveMutasi?: (id: string) => void;
-  onRejectMutasi?: (id: string, catatan: string) => void;
+  onAddMutasi: (mutasi: MutasiSiswa) => void;
+  onCetakSuratPindah: (mutasi: MutasiSiswa) => void;
 }
 
 export const MutasiSiswaView: React.FC<MutasiSiswaViewProps> = ({
-  user,
+  profile,
   mutasiList,
   onAddMutasi,
-  onEditMutasi,
-  onDeleteMutasi,
-  onOpenLightbox,
-  onPrintMutasi,
-  onUpdateStatusDapodik,
-  onApproveMutasi,
-  onRejectMutasi,
+  onCetakSuratPindah
 }) => {
-  const [activeTab, setActiveTab] = useState<'all' | 'masuk' | 'keluar' | 'pending_approval'>('all');
+  const [filterJenis, setFilterJenis] = useState<'ALL' | 'MASUK' | 'KELUAR'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterDapodik, setFilterDapodik] = useState<string>('all');
-  const [rejectModalId, setRejectModalId] = useState<string | null>(null);
-  const [catatanPenolakan, setCatatanPenolakan] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const isOperator = user.role === 'operator_superadmin' || user.role === 'admin' || user.role === 'operator_dapodik';
-  const isTU = user.role === 'tata_usaha' || user.role === 'kasubag_tu' || user.role === 'staf_persuratan';
+  // Form State for New Mutasi
+  const [jenis, setJenis] = useState<'KELUAR' | 'MASUK'>('KELUAR');
+  const [namaSiswa, setNamaSiswa] = useState('');
+  const [nisn, setNisn] = useState('');
+  const [nis, setNis] = useState('');
+  const [tingkatKelas, setTingkatKelas] = useState('X');
+  const [rombel, setRombel] = useState('X-E1');
+  const [jenisKelamin, setJenisKelamin] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
+  const [tempatLahir, setTempatLahir] = useState('Bandung');
+  const [tanggalLahir, setTanggalLahir] = useState('2009-05-10');
+  const [namaOrangTua, setNamaOrangTua] = useState('');
+  const [pekerjaanOrangTua, setPekerjaanOrangTua] = useState('Karyawan Swasta');
+  const [sekolahAsalTujuan, setSekolahAsalTujuan] = useState('');
+  const [alasanMutasi, setAlasanMutasi] = useState('Mengikuti perpindahan domisili orang tua');
 
-  const pendingApprovalCount = mutasiList.filter(
-    m => m.statusPengajuan === 'Menunggu Persetujuan Operator'
-  ).length;
-
-  const filteredList = mutasiList.filter(item => {
-    let matchTab = true;
-    if (activeTab === 'masuk') matchTab = item.jenis === 'masuk';
-    else if (activeTab === 'keluar') matchTab = item.jenis === 'keluar';
-    else if (activeTab === 'pending_approval') matchTab = item.statusPengajuan === 'Menunggu Persetujuan Operator';
-
-    const matchQuery = 
-      item.namaSiswa.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.nisn.includes(searchQuery) ||
-      item.kelas.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sekolahAsal.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sekolahTujuan.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchDapodik = filterDapodik === 'all' || item.statusDapodik === filterDapodik;
-
-    return matchTab && matchQuery && matchDapodik;
+  const filteredList = mutasiList.filter((m) => {
+    const matchFilter = filterJenis === 'ALL' || m.jenis === filterJenis;
+    const matchSearch =
+      m.namaSiswa.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.nisn.includes(searchQuery) ||
+      m.sekolahAsalTujuan.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchFilter && matchSearch;
   });
 
-  const getDapodikBadge = (status: MutasiSiswa['statusDapodik']) => {
-    switch (status) {
-      case 'Sudah Sinkron':
-        return 'bg-emerald-50 text-emerald-800 border-emerald-200';
-      case 'Proses Tarik':
-        return 'bg-sky-50 text-sky-800 border-sky-200';
-      case 'Dikeluarkan':
-        return 'bg-rose-50 text-rose-800 border-rose-200';
-      case 'Validasi Cabdis':
-        return 'bg-purple-50 text-purple-800 border-purple-200';
-      default:
-        return 'bg-amber-50 text-amber-800 border-amber-200';
-    }
+  const totalMasuk = mutasiList.filter((m) => m.jenis === 'MASUK').length;
+  const totalKeluar = mutasiList.filter((m) => m.jenis === 'KELUAR').length;
+
+  const handleSubmitNew = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!namaSiswa || !nisn || !sekolahAsalTujuan) return;
+
+    const newRecord: MutasiSiswa = {
+      id: `MUT-${Date.now()}`,
+      jenis,
+      nomorSurat: `421.2/${Math.floor(100 + Math.random() * 900)}/SMAN1-TU/X/2026`,
+      tanggalSurat: new Date().toISOString().split('T')[0],
+      namaSiswa,
+      nisn,
+      nis: nis || '242510' + Math.floor(100 + Math.random() * 899),
+      tingkatKelas,
+      rombel,
+      jenisKelamin,
+      tempatLahir,
+      tanggalLahir,
+      namaOrangTua,
+      pekerjaanOrangTua,
+      sekolahAsalTujuan,
+      alasanMutasi,
+      statusDapodik: 'Sinkron Berhasil'
+    };
+
+    onAddMutasi(newRecord);
+    setIsModalOpen(false);
+    // Reset form
+    setNamaSiswa('');
+    setNisn('');
+    setSekolahAsalTujuan('');
   };
 
-  const getApprovalBadge = (status: StatusPengajuanMutasi) => {
-    switch (status) {
-      case 'Disetujui Operator':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            <CheckCircle className="w-3 h-3 text-emerald-600" />
-            <span>Disetujui Operator</span>
-          </span>
-        );
-      case 'Ditolak Operator':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
-            <XCircle className="w-3 h-3 text-rose-600" />
-            <span>Ditolak Operator</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
-            <Clock className="w-3 h-3 text-amber-600" />
-            <span>Menunggu Persetujuan Operator</span>
-          </span>
-        );
-    }
-  };
-
-  const handleConfirmReject = () => {
-    if (!rejectModalId) return;
-    if (onRejectMutasi) {
-      onRejectMutasi(rejectModalId, catatanPenolakan || 'Berkas persyaratan mutasi belum lengkap atau kuota kelas penuh.');
-    }
-    setRejectModalId(null);
-    setCatatanPenolakan('');
+  const exportCSV = () => {
+    const headers = ['Nomor Surat,Jenis,Nama Siswa,NISN,NIS,Kelas,Rombel,Sekolah Asal/Tujuan,Alasan,Status Dapodik'];
+    const rows = mutasiList.map((m) => 
+      `"${m.nomorSurat}","${m.jenis}","${m.namaSiswa}","${m.nisn}","${m.nis}","${m.tingkatKelas}","${m.rombel}","${m.sekolahAsalTujuan}","${m.alasanMutasi}","${m.statusDapodik}"`
+    );
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Rekap_Mutasi_Siswa_Dapodik_${profile.namaSekolah.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="p-6 space-y-5 max-w-7xl mx-auto">
-      {/* Top Banner & Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+      {/* Top Header */}
+      <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <ArrowRightLeft className="w-5 h-5 text-amber-600" />
-            <h2 className="text-base font-bold text-slate-900">
-              Modul Mutasi Siswa &amp; Alur Persetujuan Dapodik
-            </h2>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            {isOperator 
-              ? 'Verifikasi permohonan mutasi dari Tata Usaha, setujui data tarik siswa masuk / penonaktifan di Dapodik.'
-              : 'Pengajuan permohonan mutasi siswa masuk & keluar oleh Tata Usaha yang otomatis diteruskan ke Operator Sekolah.'}
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Users className="w-6 h-6 text-blue-600" />
+            <span>Buku Register Mutasi Siswa Dapodik</span>
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Pencatatan mutasi siswa masuk & keluar, cetak otomatis Surat Keterangan Pindah Sekolah, dan validasi data Dapodik Kemendikbud.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onAddMutasi('masuk')}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            onClick={exportCSV}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>{isTU ? '+ Ajukan Mutasi Masuk' : '+ Tarik Siswa Masuk'}</span>
+            <Download className="w-4 h-4" />
+            <span>Ekspor CSV / Rekap</span>
           </button>
           <button
-            onClick={() => onAddMutasi('keluar')}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>{isTU ? '+ Ajukan Mutasi Keluar' : '+ Keluarkan Siswa'}</span>
+            <UserPlus className="w-4 h-4" />
+            <span>Tambah Data Mutasi</span>
           </button>
         </div>
       </div>
 
-      {/* Operator Notification Attention Banner */}
-      {isOperator && pendingApprovalCount > 0 && (
-        <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl text-xs flex items-center justify-between gap-3 text-amber-900 shadow-xs animate-in fade-in">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center shrink-0">
-              <BellRing className="w-4 h-4 text-amber-800" />
-            </div>
-            <div>
-              <p className="font-bold text-sm">
-                Ada {pendingApprovalCount} Permohonan Mutasi Siswa Baru dari Tata Usaha
-              </p>
-              <p className="text-amber-800 mt-0.5">
-                Silakan periksa kelayakan berkas rekomendasi scan dan klik tombol <strong>"Setujui &amp; Sinkron Dapodik"</strong> untuk melanjutkan proses sp.datadik.
-              </p>
-            </div>
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <Users className="w-6 h-6" />
           </div>
-          <button
-            onClick={() => setActiveTab('pending_approval')}
-            className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-bold text-xs shrink-0 cursor-pointer shadow-xs"
-          >
-            Lihat Permohonan ({pendingApprovalCount})
-          </button>
+          <div>
+            <div className="text-xs font-medium text-slate-500 uppercase">Total Register Mutasi</div>
+            <div className="text-2xl font-extrabold text-slate-900 font-mono-data">{mutasiList.length} Siswa</div>
+          </div>
         </div>
-      )}
 
-      {/* TU Notice Banner */}
-      {isTU && (
-        <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 flex items-center gap-2.5">
-          <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0" />
-          <p>
-            <strong>Petunjuk Tata Usaha:</strong> Setiap mutasi masuk atau keluar yang Anda ajukan akan berstatus <em>Menunggu Persetujuan Operator</em> dan otomatis memunculkan notifikasi ke akun <strong>Operator Sekolah &amp; Super Admin</strong> untuk verifikasi kuota dan sinkronisasi Dapodik.
-          </p>
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <ArrowDownLeft className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 uppercase">Mutasi Masuk (Tarik Data)</div>
+            <div className="text-2xl font-extrabold text-emerald-700 font-mono-data">{totalMasuk} Siswa</div>
+          </div>
         </div>
-      )}
 
-      {/* Tabs & Filter Controls */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 rounded-lg w-full md:w-auto">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+            <ArrowUpRight className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 uppercase">Mutasi Keluar (Pindah)</div>
+            <div className="text-2xl font-extrabold text-amber-700 font-mono-data">{totalKeluar} Siswa</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Filter Segmented Buttons */}
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg w-full sm:w-auto">
           <button
-            onClick={() => setActiveTab('all')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              activeTab === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            onClick={() => setFilterJenis('ALL')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+              filterJenis === 'ALL' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Semua Mutasi ({mutasiList.length})
           </button>
           <button
-            onClick={() => setActiveTab('pending_approval')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-              activeTab === 'pending_approval' ? 'bg-amber-500 text-white shadow-xs' : 'text-amber-800 hover:bg-amber-100'
+            onClick={() => setFilterJenis('MASUK')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+              filterJenis === 'MASUK' ? 'bg-white text-emerald-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
-            <span>Menunggu Approval ({pendingApprovalCount})</span>
+            Mutasi Masuk ({totalMasuk})
           </button>
           <button
-            onClick={() => setActiveTab('masuk')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              activeTab === 'masuk' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            onClick={() => setFilterJenis('KELUAR')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+              filterJenis === 'KELUAR' ? 'bg-white text-amber-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            📥 Siswa Masuk ({mutasiList.filter(m => m.jenis === 'masuk').length})
-          </button>
-          <button
-            onClick={() => setActiveTab('keluar')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              activeTab === 'keluar' ? 'bg-white text-rose-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            📤 Siswa Keluar ({mutasiList.filter(m => m.jenis === 'keluar').length})
+            Mutasi Keluar ({totalKeluar})
           </button>
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Cari siswa, NISN, rombel..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/50"
-            />
-          </div>
-
-          <select
-            value={filterDapodik}
-            onChange={e => setFilterDapodik(e.target.value)}
-            className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
-          >
-            <option value="all">Semua Status Dapodik</option>
-            <option value="Proses Tarik">Proses Tarik</option>
-            <option value="Validasi Cabdis">Validasi Cabdis</option>
-            <option value="Sudah Sinkron">Sudah Sinkron</option>
-            <option value="Dikeluarkan">Dikeluarkan</option>
-            <option value="Belum Sinkron">Belum Sinkron</option>
-          </select>
+        {/* Search */}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Cari nama, NISN, atau sekolah..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-hidden focus:border-blue-600"
+          />
         </div>
       </div>
 
       {/* Data Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] tracking-wider">
               <tr>
-                <th className="py-3 px-4 w-28 text-center">Jenis</th>
-                <th className="py-3 px-4">Nama Siswa &amp; NISN</th>
-                <th className="py-3 px-4 w-24">Kelas</th>
-                <th className="py-3 px-4">Asal / Tujuan</th>
-                <th className="py-3 px-4 w-44">Status Pengajuan</th>
-                <th className="py-3 px-4 w-40">Status Dapodik</th>
-                <th className="py-3 px-4 w-24 text-center">Scan</th>
-                <th className="py-3 px-4 w-32 text-center">Cetak</th>
-                <th className="py-3 px-4 text-center">{isOperator ? 'Verifikasi Operator' : 'Aksi'}</th>
+                <th className="px-4 py-3">Jenis & No. Surat</th>
+                <th className="px-4 py-3">Nama Siswa & NISN</th>
+                <th className="px-4 py-3">Kelas / Rombel</th>
+                <th className="px-4 py-3">Sekolah Asal / Tujuan</th>
+                <th className="px-4 py-3">Status Dapodik</th>
+                <th className="px-4 py-3 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredList.length > 0 ? (
-                filteredList.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-4 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
-                        item.jenis === 'masuk' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+            <tbody className="divide-y divide-slate-200">
+              {filteredList.map((item) => (
+                <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        item.jenis === 'MASUK'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
                       }`}>
-                        {item.jenis === 'masuk' ? '📥 Masuk' : '📤 Keluar'}
+                        {item.jenis === 'MASUK' ? 'MUTASI MASUK' : 'MUTASI KELUAR'}
                       </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="font-bold text-slate-900 block">{item.namaSiswa}</span>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono mt-0.5">
-                        <span>NISN: {item.nisn}</span>
-                        <span>·</span>
-                        <span>{item.jenisKelamin}</span>
-                      </div>
-                      {item.diajukanOleh && (
-                        <p className="text-[10px] text-slate-400 mt-0.5">
-                          Diajukan: {item.diajukanOleh}
-                        </p>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-slate-700">
-                      {item.kelas}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="text-[11px] font-medium text-slate-800">
-                        {item.jenis === 'masuk' ? (
-                          <>Dari: <span className="font-bold">{item.sekolahAsal}</span></>
-                        ) : (
-                          <>Ke: <span className="font-bold">{item.sekolahTujuan}</span></>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-slate-500 italic mt-0.5">
-                        Alasan: {item.alasanMutasi}
-                      </p>
-                    </td>
-                    <td className="py-3 px-4">
-                      {getApprovalBadge(item.statusPengajuan || 'Menunggu Persetujuan Operator')}
-                      {item.catatanOperator && (
-                        <p className="text-[10px] text-slate-500 mt-1 italic">
-                          Catatan: {item.catatanOperator}
-                        </p>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex flex-col gap-1">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getDapodikBadge(item.statusDapodik)}`}>
-                          <UserCheck className="w-3 h-3" />
-                          <span>{item.statusDapodik}</span>
-                        </span>
-                        {isOperator && (
-                          <select
-                            value={item.statusDapodik}
-                            onChange={e => onUpdateStatusDapodik(item.id, e.target.value as MutasiSiswa['statusDapodik'])}
-                            className="mt-1 text-[10px] py-0.5 px-1 border border-slate-200 rounded bg-slate-50 text-slate-600"
-                          >
-                            <option value="Proses Tarik">Set: Proses Tarik</option>
-                            <option value="Validasi Cabdis">Set: Validasi Cabdis</option>
-                            <option value="Sudah Sinkron">Set: Sudah Sinkron</option>
-                            <option value="Dikeluarkan">Set: Dikeluarkan</option>
-                            <option value="Belum Sinkron">Set: Belum Sinkron</option>
-                          </select>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {item.scanBerkas ? (
-                        <button
-                          onClick={() => onOpenLightbox(item.scanBerkas!)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-md text-[11px] font-medium transition-colors cursor-pointer"
-                          title="Lihat Berkas Scan Mutasi"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Scan</span>
-                        </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic">Belum Ada</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => onPrintMutasi(item)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-md text-[11px] font-semibold shadow-xs transition-colors cursor-pointer"
-                        title="Pratinjau & Cetak Surat Mutasi Resmi"
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                        <span>Cetak</span>
-                      </button>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {isOperator ? (
-                        <div className="flex flex-col gap-1 items-center">
-                          {item.statusPengajuan !== 'Disetujui Operator' && (
-                            <button
-                              onClick={() => {
-                                if (onApproveMutasi) onApproveMutasi(item.id);
-                              }}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold shadow-xs transition-colors cursor-pointer w-full text-center"
-                            >
-                              ✓ Setujui
-                            </button>
-                          )}
-                          {item.statusPengajuan !== 'Ditolak Operator' && (
-                            <button
-                              onClick={() => setRejectModalId(item.id)}
-                              className="px-2 py-0.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 rounded text-[10px] font-medium border border-slate-200 transition-colors w-full text-center"
-                            >
-                              Tolak / Catatan
-                            </button>
-                          )}
-                          <div className="flex items-center gap-1 mt-1">
-                            <button
-                              onClick={() => onEditMutasi(item)}
-                              title="Edit Data"
-                              className="p-1 text-sky-600 hover:bg-sky-50 rounded"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => onDeleteMutasi(item.id)}
-                              title="Hapus"
-                              className="p-1 text-rose-500 hover:bg-rose-50 rounded"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => onEditMutasi(item)}
-                            title="Edit Mutasi"
-                            className="p-1.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded-md transition-colors"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => onDeleteMutasi(item.id)}
-                            title="Hapus Data Mutasi"
-                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    <ArrowRightLeft className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                    <p className="font-medium text-xs text-slate-600">Tidak ada data mutasi yang sesuai filter</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Klik tombol di atas untuk menambah pengajuan mutasi baru</p>
+                    </div>
+                    <div className="text-[11px] font-mono-data text-slate-900 mt-1 font-medium">
+                      {item.nomorSurat}
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      {formatTanggalIndonesia(item.tanggalSurat)}
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3.5">
+                    <div className="font-bold text-slate-900 text-sm">{item.namaSiswa}</div>
+                    <div className="text-[11px] text-slate-500 font-mono-data">
+                      NISN: {item.nisn} · NIS: {item.nis}
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      Wali: {item.namaOrangTua} ({item.pekerjaanOrangTua})
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3.5">
+                    <div className="font-semibold text-slate-900">{item.tingkatKelas}</div>
+                    <div className="text-[11px] text-slate-500">{item.rombel}</div>
+                  </td>
+
+                  <td className="px-4 py-3.5 max-w-xs">
+                    <div className="font-semibold text-slate-900 truncate">{item.sekolahAsalTujuan}</div>
+                    <div className="text-[10px] text-slate-500 line-clamp-1">{item.alasanMutasi}</div>
+                  </td>
+
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{item.statusDapodik}</span>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3.5 text-right">
+                    <button
+                      onClick={() => onCetakSuratPindah(item)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md font-semibold text-xs transition-colors cursor-pointer"
+                      title="Cetak Surat Keterangan Pindah Sekolah"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Cetak Surat Pindah</span>
+                    </button>
                   </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
-
-        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between">
-          <span>Menampilkan <strong className="text-slate-800">{filteredList.length}</strong> peserta didik mutasi</span>
-          <span>Notifikasi Terhubung Langsung ke Operator Dapodik &amp; Super Admin</span>
-        </div>
       </div>
 
-      {/* REJECT MODAL */}
-      {rejectModalId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md p-5 space-y-3">
-            <h3 className="text-sm font-bold text-slate-900">Catatan Penolakan / Permintaan Revisi Berkas</h3>
-            <p className="text-xs text-slate-600">
-              Kirimkan catatan alasan permohonan mutasi ditolak atau dokumen yang perlu diperbaiki oleh Tata Usaha:
-            </p>
-            <textarea
-              value={catatanPenolakan}
-              onChange={e => setCatatanPenolakan(e.target.value)}
-              placeholder="Contoh: Berkas surat rekomendasi Cabdis belum distempel basah atau kuota rombel penuh."
-              rows={3}
-              className="w-full p-2.5 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500"
-            />
-            <div className="flex items-center justify-end gap-2 pt-2">
+      {/* Modal Tambah Data Mutasi Baru */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-5 border-b border-slate-200">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-blue-600" />
+                <span>Form Registrasi Mutasi Siswa Dapodik</span>
+              </h3>
               <button
-                onClick={() => setRejectModalId(null)}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold"
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
               >
-                Batal
-              </button>
-              <button
-                onClick={handleConfirmReject}
-                className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold shadow-xs"
-              >
-                Kirim Catatan &amp; Tolak
+                <X className="w-5 h-5" />
               </button>
             </div>
+
+            <form onSubmit={handleSubmitNew} className="p-5 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Jenis Mutasi</label>
+                  <select
+                    value={jenis}
+                    onChange={(e) => setJenis(e.target.value as 'KELUAR' | 'MASUK')}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-medium"
+                  >
+                    <option value="KELUAR">Mutasi Keluar (Pindah ke Sekolah Lain)</option>
+                    <option value="MASUK">Mutasi Masuk (Tarik Data dari Sekolah Asal)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Jenis Kelamin</label>
+                  <select
+                    value={jenisKelamin}
+                    onChange={(e) => setJenisKelamin(e.target.value as 'Laki-laki' | 'Perempuan')}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-medium"
+                  >
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Nama Lengkap Siswa</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Muhammad Kevin Pratama"
+                  value={namaSiswa}
+                  onChange={(e) => setNamaSiswa(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">NISN (10 Digit Angka)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: 0081234567"
+                    value={nisn}
+                    onChange={(e) => setNisn(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-mono-data"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">NIS Sekolah</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: 242510088"
+                    value={nis}
+                    onChange={(e) => setNis(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-mono-data"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Tingkat Kelas</label>
+                  <select
+                    value={tingkatKelas}
+                    onChange={(e) => setTingkatKelas(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900"
+                  >
+                    <option value="X">Kelas X</option>
+                    <option value="XI">Kelas XI</option>
+                    <option value="XII">Kelas XII</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Nama Rombel</label>
+                  <input
+                    type="text"
+                    value={rombel}
+                    onChange={(e) => setRombel(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Nama Orang Tua / Wali</label>
+                  <input
+                    type="text"
+                    placeholder="Nama Ayah / Ibu / Wali"
+                    value={namaOrangTua}
+                    onChange={(e) => setNamaOrangTua(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Pekerjaan Orang Tua</label>
+                  <input
+                    type="text"
+                    value={pekerjaanOrangTua}
+                    onChange={(e) => setPekerjaanOrangTua(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  {jenis === 'KELUAR' ? 'Sekolah Tujuan Pindah' : 'Sekolah Asal Siswa'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: SMA Negeri 3 Surabaya / SMA Al-Azhar Jakarta"
+                  value={sekolahAsalTujuan}
+                  onChange={(e) => setSekolahAsalTujuan(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Alasan Kepindahan</label>
+                <textarea
+                  rows={2}
+                  value={alasanMutasi}
+                  onChange={(e) => setAlasanMutasi(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-colors cursor-pointer"
+                >
+                  Simpan & Terbitkan Surat
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

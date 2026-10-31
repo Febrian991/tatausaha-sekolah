@@ -1,48 +1,54 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    color: #1e293b;
-    background-color: #f8fafc;
-    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Font resmi kedinasan naskah dinas (Tinos / Times) */
+  .font-surat {
+    font-family: 'Tinos', 'Times New Roman', serif;
+  }
+
+  .font-mono-data {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Custom styling for official Kedinasan Indonesian documents */
-.font-surat {
-  font-family: 'Tinos', 'Times New Roman', Times, serif;
+/* Double hairline border khas Kop Surat Dinas Indonesia */
+.border-kop-ganda {
+  border-bottom: 3px double #000;
 }
 
+/* Print CSS: Hides interface chrome and prints the official A4/F4 sheet perfectly */
 @media print {
-  /* Hide all UI elements when printing */
-  .no-print,
-  nav,
-  aside,
-  header,
-  .print-hide {
-    display: none !important;
-  }
-
   body {
     background: #ffffff !important;
     color: #000000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
   }
 
-  .print-area {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-paper {
     box-shadow: none !important;
     border: none !important;
-    page-break-after: always;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   @page {
     size: A4 portrait;
-    margin: 1.5cm 2cm 1.5cm 2cm;
+    margin: 2cm 2cm 2cm 2cm;
   }
 }

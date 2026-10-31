@@ -1,337 +1,186 @@
 import React, { useState } from 'react';
+import { OFFICIAL_ACCOUNTS } from '../../lib/constants';
+import { User } from '../../types';
 import { 
+  Building2, 
   Lock, 
-  User, 
-  Eye, 
-  EyeOff, 
+  User as UserIcon, 
+  AlertCircle, 
   ShieldCheck, 
-  ArrowRight,
-  Info,
-  AlertOctagon,
-  KeyRound
+  KeyRound, 
+  School
 } from 'lucide-react';
-import { UserSession, SchoolProfile, Role } from '../../types';
-import { DEFAULT_USERS } from '../../lib/constants';
-import { TutWuriHandayaniLogo } from '../surat/KopSurat';
 
 interface LoginViewProps {
-  profile: SchoolProfile;
-  onLoginSuccess: (user: UserSession) => void;
+  onLoginSuccess: (user: User) => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({
-  profile,
-  onLoginSuccess,
-}) => {
-  const [username, setUsername] = useState('operator');
-  const [password, setPassword] = useState('operator123');
-  const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<Role>('operator_superadmin');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [showAdminHelp, setShowAdminHelp] = useState(false);
+export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg(null);
+    setErrorMessage('');
+    setIsLoading(true);
 
-    const trimmedUser = username.trim().toLowerCase();
-    const trimmedPass = password.trim();
+    const cleanUser = username.trim().toLowerCase();
+    const accountEntry = OFFICIAL_ACCOUNTS[cleanUser];
 
-    if (!trimmedUser) {
-      setErrorMsg('Silakan masukkan username akun kedinasan Anda.');
-      return;
-    }
+    setTimeout(() => {
+      setIsLoading(false);
+      // Access Guard: Strict verification
+      if (!accountEntry) {
+        setErrorMessage(
+          'Akses Ditolak: Username tidak terdaftar dalam pangkalan data kedinasan. Anda tidak memiliki hak akses ke sistem ini.'
+        );
+        return;
+      }
 
-    if (!trimmedPass) {
-      setErrorMsg('Silakan masukkan kata sandi akun kedinasan.');
-      return;
-    }
+      if (accountEntry.pass !== password) {
+        setErrorMessage(
+          'Akses Ditolak: Kata sandi yang dimasukkan tidak sesuai dengan kredensial kedinasan yang terdaftar.'
+        );
+        return;
+      }
 
-    // STRICT AUTHENTICATION: Match against registered accounts only
-    const matched = DEFAULT_USERS.find(
-      u => u.username.toLowerCase() === trimmedUser
-    );
-
-    // If user is not found in database, STRICTLY DENY ACCESS
-    if (!matched) {
-      setErrorMsg(
-        `Akses Ditolak: Username "${username.trim()}" tidak terdaftar dalam pangkalan data kedinasan. Anda tidak memiliki hak akses ke sistem ini.`
-      );
-      return;
-    }
-
-    // Verify password strictly
-    const expectedPassword = matched.password || 'admin123';
-    if (trimmedPass !== expectedPassword) {
-      setErrorMsg(
-        'Akses Ditolak: Kata sandi yang Anda masukkan tidak cocok. Periksa kembali atau hubungi Operator Sekolah / Super Admin.'
-      );
-      return;
-    }
-
-    // Role verification: inform if different role selected
-    onLoginSuccess(matched);
+      onLoginSuccess(accountEntry.user);
+    }, 400);
   };
 
-  const setQuickAccount = (u: string, p: string, r: Role) => {
+  const handleQuickFill = (u: string, p: string) => {
     setUsername(u);
     setPassword(p);
-    setSelectedRole(r);
-    setErrorMsg(null);
+    setErrorMessage('');
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4 selection:bg-sky-500 selection:text-white relative">
-      {/* Background ambient accents */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-sky-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        {/* Emblem / Logo */}
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-700/30 mb-4">
+          <School className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          PORTAL ADMINISTRASI KEDINASAN
+        </h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Sistem Informasi Manajemen Administrasi Sekolah (SIMAS)
+        </p>
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* School / Institution Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700/80 shadow-inner mb-3">
-            <TutWuriHandayaniLogo className="w-12 h-12" />
-          </div>
-          <h1 className="text-xl font-black text-white tracking-tight uppercase">
-            {profile.namaSekolah}
-          </h1>
-          <p className="text-xs text-slate-400 font-medium mt-1">
-            Sistem Informasi Tata Usaha, Administrasi Persuratan &amp; Keuangan Sekolah
-          </p>
-        </div>
-
-        {/* Login Card */}
-        <div className="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
-          <div className="mb-5 pb-4 border-b border-slate-700/60">
-            <div className="flex items-center justify-between">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 sm:rounded-xl sm:px-10">
+          {/* Error Alert (Access Guard) */}
+          {errorMessage && (
+            <div className="mb-6 p-4 rounded-lg bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-xs leading-relaxed animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div>
-                <h2 className="text-base font-bold text-white">Masuk ke Portal Kedinasan</h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Autentikasi akun terdaftar untuk mengakses modul &amp; arsip.
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-sky-500/10 border border-sky-400/30 text-sky-300">
-                <ShieldCheck className="w-3 h-3 text-sky-400" />
-                <span>Terotentikasi</span>
-              </span>
-            </div>
-          </div>
-
-          {/* Error Message Alert */}
-          {errorMsg && (
-            <div className="mb-4 p-3.5 bg-rose-500/15 border border-rose-500/40 text-rose-200 text-xs rounded-xl flex items-start gap-2.5 shadow-sm animate-in fade-in">
-              <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <div className="flex-1 leading-relaxed">
-                <strong className="block font-bold text-rose-300 mb-0.5">Gagal Masuk:</strong>
-                {errorMsg}
+                <span className="font-semibold block mb-0.5">PERINGATAN KEAMANAN</span>
+                {errorMessage}
               </div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Pilih Jabatan / Peran
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Username / NIP Pegawai
               </label>
-              <select
-                value={selectedRole}
-                onChange={e => {
-                  const newRole = e.target.value as Role;
-                  setSelectedRole(newRole);
-                  // Auto-suggest username if default
-                  if (newRole === 'operator_superadmin') {
-                    setUsername('operator');
-                    setPassword('operator123');
-                  } else if (newRole === 'tata_usaha') {
-                    setUsername('tu');
-                    setPassword('tu123');
-                  } else if (newRole === 'bendahara') {
-                    setUsername('bendahara');
-                    setPassword('bendahara123');
-                  } else if (newRole === 'kepala_sekolah') {
-                    setUsername('kepsek');
-                    setPassword('kepsek123');
-                  }
-                  setErrorMsg(null);
-                }}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
-              >
-                <option value="operator_superadmin">
-                  👑 Operator Sekolah + Super Admin (Versi Lengkap)
-                </option>
-                <option value="tata_usaha">
-                  📋 Tata Usaha (Buku Induk, Persuratan &amp; Pengajuan Mutasi)
-                </option>
-                <option value="bendahara">
-                  💰 Bendahara Sekolah (Khusus Keuangan Saja)
-                </option>
-                <option value="kepala_sekolah">
-                  🏛️ Kepala Sekolah (Monitoring &amp; Disposisi)
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Username / NIP Kedinasan
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <div className="relative rounded-lg shadow-xs">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <UserIcon className="h-4 w-4" />
+                </div>
                 <input
                   type="text"
-                  value={username}
-                  onChange={e => {
-                    setUsername(e.target.value);
-                    if (errorMsg) setErrorMsg(null);
-                  }}
-                  placeholder="Masukkan username akun resmi..."
                   required
-                  className="w-full pl-9 pr-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Masukkan username akun resmi"
+                  className="block w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Kata Sandi Akun
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Kata Sandi
               </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <div className="relative rounded-lg shadow-xs">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </div>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => {
-                    setPassword(e.target.value);
-                    if (errorMsg) setErrorMsg(null);
-                  }}
-                  placeholder="Masukkan kata sandi kedinasan..."
+                  type="password"
                   required
-                  className="w-full pl-9 pr-10 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="block w-full pl-9 pr-3 py-2.5 text-sm bg-white border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full mt-2 py-2.5 px-4 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white text-xs font-bold rounded-lg shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              disabled={isLoading}
+              className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 shadow-sm transition-colors disabled:opacity-50"
             >
-              <span>Masuk Aplikasi Kedinasan</span>
-              <ArrowRight className="w-4 h-4" />
+              {isLoading ? 'Memverifikasi...' : 'Masuk ke Sistem'}
             </button>
           </form>
 
-          {/* Quick Login Chips for Ease of Access */}
-          <div className="mt-5 pt-4 border-t border-slate-700/60">
-            <p className="text-[11px] font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5 text-sky-400" />
-              <span>Pilih Cepat Akun Kedinasan Terdaftar:</span>
-            </p>
-            <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+          {/* Quick Credential Helper for Inspection */}
+          <div className="mt-8 pt-6 border-t border-slate-200 text-xs">
+            <span className="text-slate-500 font-medium block mb-2 text-center">
+              Pilih Akun Kedinasan untuk Akses Cepat:
+            </span>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
               <button
                 type="button"
-                onClick={() => setQuickAccount('operator', 'operator123', 'operator_superadmin')}
-                className={`p-2 rounded-lg border text-left transition-all ${
-                  username === 'operator'
-                    ? 'bg-sky-950/60 border-sky-500 text-sky-200'
-                    : 'bg-slate-900/60 border-slate-700/80 text-slate-300 hover:border-slate-600'
-                }`}
+                onClick={() => handleQuickFill('operator', 'operator123')}
+                className="p-2 text-left rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-colors"
               >
-                <div className="font-bold truncate text-white">👑 Operator + Super Admin</div>
-                <div className="text-[10px] text-slate-400 truncate">operator / operator123</div>
+                <div className="font-bold text-slate-800">👑 Operator & Super Admin</div>
+                <div className="text-slate-500 text-[10px]">user: operator / pass: operator123</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => setQuickAccount('tu', 'tu123', 'tata_usaha')}
-                className={`p-2 rounded-lg border text-left transition-all ${
-                  username === 'tu'
-                    ? 'bg-sky-950/60 border-sky-500 text-sky-200'
-                    : 'bg-slate-900/60 border-slate-700/80 text-slate-300 hover:border-slate-600'
-                }`}
+                onClick={() => handleQuickFill('tu', 'tu123')}
+                className="p-2 text-left rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-colors"
               >
-                <div className="font-bold truncate text-white">📋 Tata Usaha (TU)</div>
-                <div className="text-[10px] text-slate-400 truncate">tu / tu123</div>
+                <div className="font-bold text-slate-800">📋 Tata Usaha (TU)</div>
+                <div className="text-slate-500 text-[10px]">user: tu / pass: tu123</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => setQuickAccount('bendahara', 'bendahara123', 'bendahara')}
-                className={`p-2 rounded-lg border text-left transition-all ${
-                  username === 'bendahara'
-                    ? 'bg-sky-950/60 border-sky-500 text-sky-200'
-                    : 'bg-slate-900/60 border-slate-700/80 text-slate-300 hover:border-slate-600'
-                }`}
+                onClick={() => handleQuickFill('bendahara', 'bendahara123')}
+                className="p-2 text-left rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-colors"
               >
-                <div className="font-bold truncate text-white">💰 Bendahara Sekolah</div>
-                <div className="text-[10px] text-slate-400 truncate">bendahara / bendahara123</div>
+                <div className="font-bold text-slate-800">💰 Bendahara BOS</div>
+                <div className="text-slate-500 text-[10px]">user: bendahara / pass: bendahara123</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => setQuickAccount('kepsek', 'kepsek123', 'kepala_sekolah')}
-                className={`p-2 rounded-lg border text-left transition-all ${
-                  username === 'kepsek'
-                    ? 'bg-sky-950/60 border-sky-500 text-sky-200'
-                    : 'bg-slate-900/60 border-slate-700/80 text-slate-300 hover:border-slate-600'
-                }`}
+                onClick={() => handleQuickFill('kepsek', 'kepsek123')}
+                className="p-2 text-left rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-colors"
               >
-                <div className="font-bold truncate text-white">🏛️ Kepala Sekolah</div>
-                <div className="text-[10px] text-slate-400 truncate">kepsek / kepsek123</div>
+                <div className="font-bold text-slate-800">🏛️ Kepala Sekolah</div>
+                <div className="text-slate-500 text-[10px]">user: kepsek / pass: kepsek123</div>
               </button>
             </div>
           </div>
-
-          {/* Privacy & Confidentiality note */}
-          <div className="mt-5 pt-3 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Akses Terbatas Pegawai Resmi</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowAdminHelp(!showAdminHelp)}
-              className="text-slate-400 hover:text-sky-300 underline decoration-slate-600 cursor-pointer"
-            >
-              Info Hak Akses
-            </button>
-          </div>
-
-          {showAdminHelp && (
-            <div className="mt-3 p-3 bg-slate-900/95 border border-slate-700 rounded-lg text-xs text-slate-300 space-y-2 animate-in fade-in">
-              <div className="flex items-center gap-1.5 text-sky-400 font-semibold text-[11px]">
-                <Info className="w-3.5 h-3.5" />
-                <span>Ketentuan Hak Akses &amp; Jabatan:</span>
-              </div>
-              <ul className="text-[11px] text-slate-300 space-y-1.5 list-disc list-inside">
-                <li>
-                  <strong className="text-white">Operator Sekolah + Super Admin:</strong> Akses penuh seluruh sistem, verifikasi/approval mutasi siswa dari TU, manajemen pengguna, persuratan &amp; sinkronisasi Dapodik.
-                </li>
-                <li>
-                  <strong className="text-white">Tata Usaha:</strong> Akses Buku Induk Siswa, Persuratan (Masuk &amp; Keluar), dan Pengajuan Permohonan Mutasi Masuk/Keluar (otomatis memicu notifikasi ke Operator Sekolah).
-                </li>
-                <li>
-                  <strong className="text-white">Bendahara Sekolah:</strong> Khusus masalah keuangan sekolah saja (Kas Masuk/Keluar, SPP, BOS/BOSP, RKAS, Cetak Kwitansi).
-                </li>
-                <li>
-                  <strong className="text-rose-400">Pengguna Tanpa Akun:</strong> Ditolak otomatis oleh sistem dan tidak dapat mengakses portal.
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
 
-        {/* Footer info */}
-        <p className="text-center text-[11px] text-slate-500 mt-4">
-          Kementerian Pendidikan Dasar dan Menengah RI · Tata Naskah Dinas Elektronik
+        {/* Security Notice */}
+        <p className="mt-4 text-center text-xs text-slate-500 flex items-center justify-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+          <span>Sistem Keamanan Terintegrasi Pangkalan Data Dapodik</span>
         </p>
       </div>
     </div>
